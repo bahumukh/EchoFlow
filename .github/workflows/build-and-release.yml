@@ -11,8 +11,9 @@ on:
 jobs:
   build:
     name: Build on macOS
-    # We must use macos-14 or later for arm64 (Apple Silicon) support which our build script expects
     runs-on: macos-14
+    permissions:
+      contents: write
 
     steps:
     - name: Checkout Repository
