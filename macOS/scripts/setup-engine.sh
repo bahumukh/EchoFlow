@@ -5,6 +5,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+SHARED_ROOT="$(cd "$PROJECT_ROOT/.." && pwd)"
 
 MODEL_NAME="${1:-small.en}"
 
@@ -31,8 +32,8 @@ done
 echo "==> Setting up Echoflow engine (model: $MODEL_NAME)"
 
 # Create directories
-mkdir -p "$PROJECT_ROOT/Vendor"
-mkdir -p "$PROJECT_ROOT/Runtime/models"
+mkdir -p "$SHARED_ROOT/Vendor"
+mkdir -p "$SHARED_ROOT/Runtime/models"
 
 # --- CMake ---
 CMAKE_BIN=""
@@ -44,11 +45,11 @@ else
     CMAKE_TAR="cmake-${CMAKE_VERSION}-macos-universal.tar.gz"
     CMAKE_URL="https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/${CMAKE_TAR}"
     CMAKE_SHA256="5221a13450c7a0219a2a0d1b6c9085eb06489721fafd8488ccebc1584175d2fb"
-    CMAKE_DIR="$PROJECT_ROOT/Vendor/cmake-${CMAKE_VERSION}-macos-universal"
+    CMAKE_DIR="$SHARED_ROOT/Vendor/cmake-${CMAKE_VERSION}-macos-universal"
 
     if [ ! -d "$CMAKE_DIR" ]; then
         echo "==> Downloading CMake ${CMAKE_VERSION}..."
-        cd "$PROJECT_ROOT/Vendor"
+        cd "$SHARED_ROOT/Vendor"
         curl -fSL -o "$CMAKE_TAR" "$CMAKE_URL"
 
         echo "==> Verifying CMake checksum..."
@@ -75,7 +76,7 @@ else
 fi
 
 # --- whisper.cpp ---
-WHISPER_DIR="$PROJECT_ROOT/Vendor/whisper.cpp"
+WHISPER_DIR="$SHARED_ROOT/Vendor/whisper.cpp"
 WHISPER_TAG="v1.9.1"
 
 if [ ! -d "$WHISPER_DIR/.git" ]; then
@@ -114,8 +115,8 @@ if [ ! -f "$WHISPER_CLI" ]; then
 fi
 
 echo "==> Installing whisper-cli to Runtime/"
-cp "$WHISPER_CLI" "$PROJECT_ROOT/Runtime/whisper-cli"
-chmod 755 "$PROJECT_ROOT/Runtime/whisper-cli"
+cp "$WHISPER_CLI" "$SHARED_ROOT/Runtime/whisper-cli"
+chmod 755 "$SHARED_ROOT/Runtime/whisper-cli"
 
 # --- Download model ---
 echo "==> Downloading model: $MODEL_NAME..."
@@ -129,13 +130,13 @@ if [ ! -f "$MODEL_SRC" ]; then
 fi
 
 echo "==> Installing model to Runtime/models/"
-cp "$MODEL_SRC" "$PROJECT_ROOT/Runtime/models/${MODEL_FILE}"
-chmod 644 "$PROJECT_ROOT/Runtime/models/${MODEL_FILE}"
+cp "$MODEL_SRC" "$SHARED_ROOT/Runtime/models/${MODEL_FILE}"
+chmod 644 "$SHARED_ROOT/Runtime/models/${MODEL_FILE}"
 
 echo ""
 echo "==> Engine setup complete!"
-echo "    whisper-cli: $PROJECT_ROOT/Runtime/whisper-cli"
-echo "    Model:       $PROJECT_ROOT/Runtime/models/${MODEL_FILE}"
+echo "    whisper-cli: $SHARED_ROOT/Runtime/whisper-cli"
+echo "    Model:       $SHARED_ROOT/Runtime/models/${MODEL_FILE}"
 echo ""
 echo "Next steps:"
 echo "  ./scripts/build-app.sh"

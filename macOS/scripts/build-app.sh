@@ -59,9 +59,9 @@ if [ -f "$PROJECT_ROOT/Config/AppIcon.icns" ]; then
 fi
 
 # Install Runtime if available
-if [ -x "$PROJECT_ROOT/Runtime/whisper-cli" ]; then
+if [ -x "$PROJECT_ROOT/../Runtime/whisper-cli" ]; then
     echo "==> Bundling Runtime..."
-    ditto "$PROJECT_ROOT/Runtime" "$APP_DIR/Contents/Resources/Runtime"
+    ditto "$PROJECT_ROOT/../Runtime" "$APP_DIR/Contents/Resources/Runtime"
 else
     echo "WARNING: Runtime/whisper-cli not found or not executable."
     echo "         The app will build but show 'Engine setup needed' at launch."
