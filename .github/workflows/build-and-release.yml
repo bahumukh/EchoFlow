@@ -24,6 +24,11 @@ jobs:
       with:
         xcode-version: '15.4'
 
+    - name: Setup Engine (whisper.cpp & Models)
+      run: |
+        chmod +x ./scripts/setup-engine.sh
+        ./scripts/setup-engine.sh
+
     - name: Build Application
       run: |
         chmod +x ./scripts/build-app.sh
