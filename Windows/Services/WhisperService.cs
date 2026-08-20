@@ -14,8 +14,18 @@ namespace Echoflow.Services
         {
             // Resolve paths relative to the executable
             string baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            _whisperExePath = Path.Combine(baseDir, "..", "..", "..", "..", "Runtime", "whisper-cli.exe");
-            _modelPath = Path.Combine(baseDir, "..", "..", "..", "..", "Runtime", "models", "ggml-small.en.bin");
+            
+            // Check if Runtime exists directly next to executable (Production ZIP)
+            if (Directory.Exists(Path.Combine(baseDir, "Runtime")))
+            {
+                _whisperExePath = Path.Combine(baseDir, "Runtime", "whisper-cli.exe");
+                _modelPath = Path.Combine(baseDir, "Runtime", "models", "ggml-small.en.bin");
+            }
+            else // Local development fallback
+            {
+                _whisperExePath = Path.Combine(baseDir, "..", "..", "..", "..", "Runtime", "whisper-cli.exe");
+                _modelPath = Path.Combine(baseDir, "..", "..", "..", "..", "Runtime", "models", "ggml-small.en.bin");
+            }
         }
 
         public async Task<string?> TranscribeAsync(string audioFilePath)

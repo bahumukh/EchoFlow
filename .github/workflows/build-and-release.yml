@@ -9,7 +9,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  build-macos:
     name: Build on macOS
     runs-on: macos-14
     permissions:
@@ -37,20 +37,129 @@ jobs:
     - name: Package Release ZIP
       run: |
         cd dist
-        zip -ry Echoflow.zip Echoflow.app
+        zip -ry Echoflow-macOS.zip Echoflow.app
 
     - name: Upload Artifact (CI)
       if: startsWith(github.ref, 'refs/tags/') != true
       uses: actions/upload-artifact@v4
       with:
-        name: Echoflow-Build
-        path: dist/Echoflow.zip
+        name: Echoflow-macOS
+        path: dist/Echoflow-macOS.zip
 
     - name: Create GitHub Release
       if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v2
       with:
-        files: dist/Echoflow.zip
-        generate_release_notes: true
+        files: dist/Echoflow-macOS.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+  build-windows:
+    name: Build on Windows
+    runs-on: windows-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Setup Engine (whisper.cpp & Models)
+      run: |
+        mkdir -p Runtime/models
+        git clone --depth 1 --branch v1.9.1 https://github.com/ggml-org/whisper.cpp.git Vendor/whisper.cpp
+        cd Vendor/whisper.cpp
+        cmake -B build
+        cmake --build build --config Release
+        copy build\bin\Release\whisper-cli.exe ..\..\Runtime\
+        curl -L -o ..\..\Runtime\models\ggml-small.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en.bin
+      shell: cmd
+
+    - name: Build WPF Application
+      run: |
+        cd Windows
+        dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ../dist/Windows
+      shell: cmd
+
+    - name: Package Release ZIP
+      run: |
+        xcopy /E /I Runtime dist\Windows\Runtime
+        Compress-Archive -Path dist\Windows\* -DestinationPath dist\Echoflow-Windows.zip
+      shell: powershell
+
+    - name: Upload Artifact (CI)
+      if: startsWith(github.ref, 'refs/tags/') != true
+      uses: actions/upload-artifact@v4
+      with:
+        name: Echoflow-Windows
+        path: dist/Echoflow-Windows.zip
+
+    - name: Create GitHub Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: dist/Echoflow-Windows.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+
+  build-linux:
+    name: Build on Linux
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Install System Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake libgtk-3-dev libasound2-dev libx11-dev libxtst-dev
+
+    - name: Setup Engine (whisper.cpp & Models)
+      run: |
+        mkdir -p Runtime/models
+        git clone --depth 1 --branch v1.9.1 https://github.com/ggml-org/whisper.cpp.git Vendor/whisper.cpp
+        cd Vendor/whisper.cpp
+        cmake -B build
+        cmake --build build --config Release
+        cp build/bin/whisper-cli ../../Runtime/
+        curl -L -o ../../Runtime/models/ggml-small.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en.bin
+
+    - name: Build GTK Application
+      run: |
+        cd Linux
+        mkdir build && cd build
+        cmake ..
+        make
+        mkdir -p ../../dist/Linux
+        cp echoflow ../../dist/Linux/
+
+    - name: Package Release ZIP
+      run: |
+        cp -r Runtime dist/Linux/
+        cd dist/Linux
+        zip -ry ../Echoflow-Linux.zip .
+
+    - name: Upload Artifact (CI)
+      if: startsWith(github.ref, 'refs/tags/') != true
+      uses: actions/upload-artifact@v4
+      with:
+        name: Echoflow-Linux
+        path: dist/Echoflow-Linux.zip
+
+    - name: Create GitHub Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: dist/Echoflow-Linux.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

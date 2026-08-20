@@ -7,15 +7,26 @@
 #include <limits.h>
 #include <cstdio>
 
+#include <sys/stat.h>
+
 WhisperService::WhisperService() {
     char result[PATH_MAX];
     ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
     std::string exePath = std::string(result, (count > 0) ? count : 0);
     std::string baseDir = exePath.substr(0, exePath.find_last_of("\\/"));
     
-    // Assuming binary is in Linux/build/, root is Linux/../
-    whisperExePath = baseDir + "/../../Runtime/whisper-cli";
-    modelPath = baseDir + "/../../Runtime/models/ggml-small.en.bin";
+    struct stat sb;
+    std::string prodRuntime = baseDir + "/Runtime";
+    
+    if (stat(prodRuntime.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode)) {
+        // Production ZIP deployment
+        whisperExePath = prodRuntime + "/whisper-cli";
+        modelPath = prodRuntime + "/models/ggml-small.en.bin";
+    } else {
+        // Local development fallback
+        whisperExePath = baseDir + "/../../Runtime/whisper-cli";
+        modelPath = baseDir + "/../../Runtime/models/ggml-small.en.bin";
+    }
 }
 
 std::string WhisperService::transcribe(const std::string& audioPath) {
