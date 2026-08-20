@@ -5,6 +5,7 @@
 #include <array>
 #include <unistd.h>
 #include <limits.h>
+#include <cstdio>
 
 WhisperService::WhisperService() {
     char result[PATH_MAX];

@@ -1,6 +1,7 @@
 #include "GlobalHotkeyService.hpp"
 #include <X11/keysym.h>
 #include <iostream>
+#include <cstring>
 
 GlobalHotkeyService::GlobalHotkeyService(std::function<void()> onKeyDown, std::function<void()> onKeyUp)
     : onKeyDown(onKeyDown), onKeyUp(onKeyUp), running(false), isKeyPressed(false) {

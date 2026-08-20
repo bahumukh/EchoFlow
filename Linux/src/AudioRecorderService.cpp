@@ -4,6 +4,8 @@
 #include <vector>
 #include <cstring>
 #include <unistd.h>
+#include <cstdlib>
+#include <cerrno>
 
 AudioRecorderService::AudioRecorderService() : isRecording(false), pcm_handle(nullptr) {
 }
