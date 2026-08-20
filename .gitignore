@@ -1,10 +1,12 @@
 # Xcode
 .build/
 build/
-DerivedData/
-*.pbxproj
-*.xcworkspace
-xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+macOS/.build/
+macOS/dist/
+macOS/Runtime/
+macOS/Vendor/
 *.xcuserstate
 
 # Swift

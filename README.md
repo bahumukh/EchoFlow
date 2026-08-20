@@ -16,9 +16,17 @@ Echoflow provides a global, low-friction, hold-to-dictate workflow designed for 
 - **Offline AI Models**: Switch between `Base` and `Small` language models dynamically based on your speed and accuracy preferences.
 - **Custom Dictionary**: Teach Echoflow your specific industry terms, names, and reusable snippets via a built-in JSON dictionary.
 
+## Architecture
+Echoflow uses a **multi-native architecture** to ensure the best possible performance and system integration on every platform:
+- **macOS**: Native Swift/AppKit application
+- **Windows**: Native C#/.NET application (Coming Soon)
+- **Linux**: Native C++/GTK application (Coming Soon)
+
+Each platform uses the identical local `whisper.cpp` engine for processing audio.
+
 ---
 
-## Installation Guide (For Users)
+## Installation Guide (macOS Users)
 
 There are absolutely no limits or caps on how many people can download or use Echoflow. To install the app:
 
@@ -47,11 +55,11 @@ If you are a developer and wish to compile the application yourself:
 - Xcode installed on your Mac.
 - Homebrew installed (optional, for dependencies).
 
-### Build Instructions
+### Build Instructions (macOS)
 1. Clone the repository:
    ```bash
    git clone https://github.com/bahumukh/EchoFlow.git
-   cd EchoFlow
+   cd EchoFlow/macOS
    ```
 2. Run the automated installation script. This will compile the Swift code, download the necessary Whisper AI models, package the `.app` bundle, and install it into your `~/Applications` directory:
    ```bash

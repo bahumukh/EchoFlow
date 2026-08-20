@@ -26,13 +26,13 @@ jobs:
 
     - name: Setup Engine (whisper.cpp & Models)
       run: |
-        chmod +x ./scripts/setup-engine.sh
-        ./scripts/setup-engine.sh
+        chmod +x ./macOS/scripts/setup-engine.sh
+        ./macOS/scripts/setup-engine.sh
 
     - name: Build Application
       run: |
-        chmod +x ./scripts/build-app.sh
-        ./scripts/build-app.sh
+        chmod +x ./macOS/scripts/build-app.sh
+        ./macOS/scripts/build-app.sh
 
     - name: Package Release ZIP
       run: |
