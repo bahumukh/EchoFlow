@@ -1,0 +1,31 @@
+<Window x:Class="Echoflow.UI.HUDWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Echoflow HUD" Height="80" Width="220"
+        WindowStyle="None" Background="#B21E1E1E" 
+        AllowsTransparency="True" Topmost="True" 
+        ShowInTaskbar="False" ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen"
+        IsHitTestVisible="False">
+    <Window.Resources>
+        <!-- Glassmorphism effect via blur on borders if supported, else just semi-transparent -->
+    </Window.Resources>
+    
+    <Border CornerRadius="20" Background="#33FFFFFF" BorderThickness="1" BorderBrush="#55FFFFFF">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <!-- Pulsing red circle indicating recording -->
+            <Ellipse Width="12" Height="12" Fill="#FF3B30" Margin="0,0,10,0">
+                <Ellipse.Triggers>
+                    <EventTrigger RoutedEvent="Loaded">
+                        <BeginStoryboard>
+                            <Storyboard RepeatBehavior="Forever">
+                                <DoubleAnimation Storyboard.TargetProperty="Opacity" From="1.0" To="0.3" Duration="0:0:0.8" AutoReverse="True" />
+                            </Storyboard>
+                        </BeginStoryboard>
+                    </EventTrigger>
+                </Ellipse.Triggers>
+            </Ellipse>
+            <TextBlock Text="Listening..." Foreground="White" FontSize="18" FontWeight="SemiBold" VerticalAlignment="Center" />
+        </StackPanel>
+    </Border>
+</Window>
