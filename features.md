@@ -1,7 +1,8 @@
 # EchoFlow — Features, Gaps & Improvement Roadmap
 
-This document identifies missing features, product gaps, technical improvements, and opportunities to make EchoFlow a more reliable and differentiated voice-to-text product.
+> **UPDATE (August 2026):** All features in Section 2 (Undo, History, Hotkeys, Onboarding, and Model Management) have now been successfully implemented in the EchoFlow V1 release!
 
+This document identifies features, product gaps, technical improvements, and opportunities to make EchoFlow a more reliable and differentiated voice-to-text product.
 ---
 
 ## 1. Product Vision
@@ -29,7 +30,7 @@ A possible positioning:
 
 ---
 
-# 2. Critical Missing Features
+# 2. Core Implemented Features (V1)
 
 ## 2.1 Undo Last Insertion
 
