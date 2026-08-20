@@ -27,7 +27,10 @@ There are absolutely no limits or caps on how many people can download or use Ec
 2. Download the latest `Echoflow-v0.1.0.zip` file.
 3. Extract the ZIP file.
 4. Drag the extracted `Echoflow.app` into your Mac's **Applications** folder.
-5. Open `Echoflow` from your Launchpad or Spotlight.
+5. **Important**: Because this app is not distributed via the App Store, macOS may block it. To open it the first time:
+   - **Right-click (or Control-click)** the `Echoflow.app` icon in your Applications folder.
+   - Select **Open** from the menu.
+   - Click **Open** again in the warning dialog to bypass Gatekeeper.
 6. The first time you launch the app, you will be prompted to grant **Accessibility** and **Microphone** permissions. (Accessibility is required to paste text into other apps).
 
 ### System Requirements
