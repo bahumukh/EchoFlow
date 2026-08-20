@@ -36,7 +36,7 @@ jobs:
 
     - name: Package Release ZIP
       run: |
-        cd dist
+        cd macOS/dist
         zip -ry Echoflow-macOS.zip Echoflow.app
 
     - name: Upload Artifact (CI)
@@ -44,13 +44,13 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Echoflow-macOS
-        path: dist/Echoflow-macOS.zip
+        path: macOS/dist/Echoflow-macOS.zip
 
     - name: Create GitHub Release
       if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v2
       with:
-        files: dist/Echoflow-macOS.zip
+        files: macOS/dist/Echoflow-macOS.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -77,21 +77,19 @@ jobs:
         cd Vendor/whisper.cpp
         cmake -B build
         cmake --build build --config Release
-        copy build\bin\Release\whisper-cli.exe ..\..\Runtime\
-        curl -L -o ..\..\Runtime\models\ggml-small.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en.bin
-      shell: cmd
+        cp build/bin/Release/whisper-cli.exe ../../Runtime/
+        curl -L -o ../../Runtime/models/ggml-small.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en.bin
 
     - name: Build WPF Application
       run: |
         cd Windows
         dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ../dist/Windows
-      shell: cmd
 
     - name: Package Release ZIP
       run: |
-        xcopy /E /I Runtime dist\Windows\Runtime
-        Compress-Archive -Path dist\Windows\* -DestinationPath dist\Echoflow-Windows.zip
-      shell: powershell
+        cp -r Runtime dist/Windows/
+        cd dist/Windows
+        zip -ry ../Echoflow-Windows.zip .
 
     - name: Upload Artifact (CI)
       if: startsWith(github.ref, 'refs/tags/') != true
