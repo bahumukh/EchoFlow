@@ -13,7 +13,14 @@ class EchoflowSettingsWindowController: NSWindowController {
     private var smartCheck: NSButton!
     private var launchAtLoginCheck: NSButton!
     
+    private var modelPopup: NSPopUpButton!
+    private var modelActionButton: NSButton!
+    private var modelStatusLabel: NSTextField!
+    private var modelProgress: NSProgressIndicator!
+    private var modelRefreshTimer: Timer?
+    
     private var dictionarySheetController: EchoflowDictionarySheetController!
+    private var historySheetController: EchoflowHistorySheetController!
     
     weak var delegate: EchoflowAppDelegate?
     
@@ -44,6 +51,7 @@ class EchoflowSettingsWindowController: NSWindowController {
         window.contentView = effectView
         
         dictionarySheetController = EchoflowDictionarySheetController(delegate: delegate)
+        historySheetController = EchoflowHistorySheetController(delegate: delegate)
         
         buildUI(in: effectView)
     }
@@ -91,20 +99,46 @@ class EchoflowSettingsWindowController: NSWindowController {
         holdLabel.frame = NSRect(x: padding, y: y, width: 120, height: 20)
         view.addSubview(holdLabel)
         
-        // Styled shortcut box
-        let shortcutBox = NSView(frame: NSRect(x: 200, y: y - 2, width: 120, height: 24))
-        shortcutBox.wantsLayer = true
-        shortcutBox.layer?.cornerRadius = 6
-        shortcutBox.layer?.borderColor = NSColor.separatorColor.cgColor
-        shortcutBox.layer?.borderWidth = 1
-        shortcutBox.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
+        let dictationPopup = NSPopUpButton(frame: NSRect(x: 198, y: y - 2, width: 140, height: 26))
+        let dOptions = [
+            "Hold Fn": "fn",
+            "Hold Option": "opt",
+            "Hold Control": "ctrl",
+            "Hold Command": "cmd"
+        ]
+        // Sort keys logically
+        let dKeys = ["Hold Fn", "Hold Option", "Hold Control", "Hold Command"]
+        for key in dKeys { dictationPopup.addItem(withTitle: key) }
+        dictationPopup.target = self
+        dictationPopup.action = #selector(dictationHotkeyChanged(_:))
+        view.addSubview(dictationPopup)
         
-        let shortcutText = NSTextField(labelWithString: "Fn")
-        shortcutText.font = NSFont.systemFont(ofSize: 13, weight: .medium)
-        shortcutText.alignment = .center
-        shortcutText.frame = NSRect(x: 0, y: 3, width: 120, height: 18)
-        shortcutBox.addSubview(shortcutText)
-        view.addSubview(shortcutBox)
+        if let currentDH = delegate?.dictationHotkey, let match = dOptions.first(where: { $1 == currentDH }) {
+            dictationPopup.selectItem(withTitle: match.key)
+        }
+        
+        y -= 35
+        
+        let undoLabel = NSTextField(labelWithString: "Undo shortcut")
+        undoLabel.font = NSFont.systemFont(ofSize: 14, weight: .medium)
+        undoLabel.frame = NSRect(x: padding, y: y, width: 120, height: 20)
+        view.addSubview(undoLabel)
+        
+        let undoPopup = NSPopUpButton(frame: NSRect(x: 198, y: y - 2, width: 140, height: 26))
+        let uOptions = [
+            "Option + Z": "opt_z",
+            "Command + U": "cmd_u",
+            "Control + Z": "ctrl_z"
+        ]
+        let uKeys = ["Option + Z", "Command + U", "Control + Z"]
+        for key in uKeys { undoPopup.addItem(withTitle: key) }
+        undoPopup.target = self
+        undoPopup.action = #selector(undoHotkeyChanged(_:))
+        view.addSubview(undoPopup)
+        
+        if let currentUH = delegate?.undoHotkey, let match = uOptions.first(where: { $1 == currentUH }) {
+            undoPopup.selectItem(withTitle: match.key)
+        }
         
         y -= 40
         
@@ -144,19 +178,48 @@ class EchoflowSettingsWindowController: NSWindowController {
         modelLabel.frame = NSRect(x: padding, y: y, width: 120, height: 20)
         view.addSubview(modelLabel)
         
-        let modelName = delegate?.modelPath != nil ? (delegate!.modelPath! as NSString).lastPathComponent : "Not installed"
-        let modelVal = NSTextField(labelWithString: modelName)
-        modelVal.font = NSFont.systemFont(ofSize: 14)
-        modelVal.textColor = .labelColor
-        modelVal.frame = NSRect(x: 200, y: y, width: 300, height: 20)
-        view.addSubview(modelVal)
+        modelPopup = NSPopUpButton(frame: NSRect(x: 198, y: y - 2, width: 220, height: 26))
+        modelPopup.addItem(withTitle: EchoflowModelManager.ModelType.base.displayName)
+        modelPopup.addItem(withTitle: EchoflowModelManager.ModelType.small.displayName)
+        modelPopup.target = self
+        modelPopup.action = #selector(modelSelectionChanged(_:))
+        view.addSubview(modelPopup)
         
-        y -= 20
-        let installedIndicator = NSTextField(labelWithString: "● Installed locally")
-        installedIndicator.font = NSFont.systemFont(ofSize: 12)
-        installedIndicator.textColor = delegate?.modelPath != nil ? .systemGreen : .systemRed
-        installedIndicator.frame = NSRect(x: 200, y: y, width: 300, height: 16)
-        view.addSubview(installedIndicator)
+        // Select active model in dropdown
+        let currentActiveRaw = delegate?.activeModel ?? EchoflowModelManager.ModelType.base.rawValue
+        if currentActiveRaw == EchoflowModelManager.ModelType.base.rawValue {
+            modelPopup.selectItem(at: 0)
+        } else {
+            modelPopup.selectItem(at: 1)
+        }
+        
+        modelActionButton = NSButton(title: "Download", target: self, action: #selector(modelActionClicked(_:)))
+        modelActionButton.frame = NSRect(x: 430, y: y - 2, width: 100, height: 24)
+        modelActionButton.bezelStyle = .rounded
+        view.addSubview(modelActionButton)
+        
+        y -= 25
+        modelStatusLabel = NSTextField(labelWithString: "Checking status...")
+        modelStatusLabel.font = NSFont.systemFont(ofSize: 12)
+        modelStatusLabel.textColor = .secondaryLabelColor
+        modelStatusLabel.frame = NSRect(x: 200, y: y, width: 220, height: 16)
+        view.addSubview(modelStatusLabel)
+        
+        modelProgress = NSProgressIndicator(frame: NSRect(x: 430, y: y, width: 100, height: 16))
+        modelProgress.style = .bar
+        modelProgress.isIndeterminate = false
+        modelProgress.minValue = 0.0
+        modelProgress.maxValue = 1.0
+        modelProgress.doubleValue = 0.0
+        modelProgress.isHidden = true
+        view.addSubview(modelProgress)
+        
+        updateModelUI()
+        
+        modelRefreshTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true, block: { [weak self] _ in
+            if EchoflowModelManager.shared.isDownloading() { return }
+            self?.updateModelUI()
+        })
         
         y -= 40
         
@@ -187,6 +250,11 @@ class EchoflowSettingsWindowController: NSWindowController {
         editDictButton.frame = NSRect(x: padding, y: y, width: 220, height: 30)
         editDictButton.bezelStyle = .rounded
         view.addSubview(editDictButton)
+        
+        let historyButton = NSButton(title: "View Transcription History…", target: self, action: #selector(openHistorySheet(_:)))
+        historyButton.frame = NSRect(x: 260, y: y, width: 220, height: 30)
+        historyButton.bezelStyle = .rounded
+        view.addSubview(historyButton)
         
         y -= 40
         addSeparator(in: view, at: y, padding: padding)
@@ -252,6 +320,108 @@ class EchoflowSettingsWindowController: NSWindowController {
         }
     }
     
+    @objc private func dictationHotkeyChanged(_ sender: NSPopUpButton) {
+        let options = [
+            "Hold Fn": "fn",
+            "Hold Option": "opt",
+            "Hold Control": "ctrl",
+            "Hold Command": "cmd"
+        ]
+        if let title = sender.titleOfSelectedItem, let code = options[title] {
+            delegate?.dictationHotkey = code
+        }
+    }
+    
+    @objc private func undoHotkeyChanged(_ sender: NSPopUpButton) {
+        let options = [
+            "Option + Z": "opt_z",
+            "Command + U": "cmd_u",
+            "Control + Z": "ctrl_z"
+        ]
+        if let title = sender.titleOfSelectedItem, let code = options[title] {
+            delegate?.undoHotkey = code
+        }
+    }
+    
+    @objc private func modelSelectionChanged(_ sender: NSPopUpButton) {
+        updateModelUI()
+    }
+    
+    @objc private func modelActionClicked(_ sender: NSButton) {
+        let isBaseSelected = modelPopup.indexOfSelectedItem == 0
+        let type: EchoflowModelManager.ModelType = isBaseSelected ? .base : .small
+        
+        if EchoflowModelManager.shared.isDownloading() {
+            EchoflowModelManager.shared.cancelDownload()
+            updateModelUI()
+            return
+        }
+        
+        let path = EchoflowModelManager.shared.getModelPath(type)
+        if path != nil {
+            // It's installed, but not active. Set active!
+            delegate?.activeModel = type.rawValue
+            updateModelUI()
+            return
+        }
+        
+        // Start download
+        modelActionButton.title = "Cancel"
+        modelStatusLabel.stringValue = "Downloading..."
+        modelStatusLabel.textColor = .systemOrange
+        modelProgress.isHidden = false
+        modelProgress.doubleValue = 0.0
+        
+        EchoflowModelManager.shared.downloadModel(type) { [weak self] progress in
+            self?.modelProgress.doubleValue = progress
+        } completion: { [weak self] result in
+            switch result {
+            case .success(_):
+                self?.delegate?.activeModel = type.rawValue // Auto-activate on download finish
+                self?.updateModelUI()
+            case .failure(let error):
+                if (error as NSError).code == NSURLErrorCancelled {
+                    self?.updateModelUI()
+                } else {
+                    self?.modelStatusLabel.stringValue = "Download Failed: \(error.localizedDescription)"
+                    self?.modelStatusLabel.textColor = .systemRed
+                    self?.modelActionButton.title = "Retry"
+                    self?.modelProgress.isHidden = true
+                }
+            }
+        }
+    }
+    
+    private func updateModelUI() {
+        if EchoflowModelManager.shared.isDownloading() { return }
+        
+        let isBaseSelected = modelPopup.indexOfSelectedItem == 0
+        let type: EchoflowModelManager.ModelType = isBaseSelected ? .base : .small
+        let path = EchoflowModelManager.shared.getModelPath(type)
+        
+        if path != nil {
+            let currentActiveRaw = delegate?.activeModel ?? EchoflowModelManager.ModelType.base.rawValue
+            if currentActiveRaw == type.rawValue {
+                modelActionButton.title = "Active"
+                modelActionButton.isEnabled = false
+                modelStatusLabel.stringValue = "● Installed and Active"
+                modelStatusLabel.textColor = .systemGreen
+            } else {
+                modelActionButton.title = "Set Active"
+                modelActionButton.isEnabled = true
+                modelStatusLabel.stringValue = "● Installed (Inactive)"
+                modelStatusLabel.textColor = .secondaryLabelColor
+            }
+            modelProgress.isHidden = true
+        } else {
+            modelActionButton.title = "Download"
+            modelActionButton.isEnabled = true
+            modelStatusLabel.stringValue = "○ Not installed"
+            modelStatusLabel.textColor = .secondaryLabelColor
+            modelProgress.isHidden = true
+        }
+    }
+    
     @objc private func copyLastTranscript(_ sender: Any) {
         delegate?.copyLastTranscript(sender)
     }
@@ -259,6 +429,12 @@ class EchoflowSettingsWindowController: NSWindowController {
     @objc private func openDictionarySheet(_ sender: Any) {
         guard let window = self.window, let sheet = dictionarySheetController.window else { return }
         dictionarySheetController.refreshJSONEditor()
+        window.beginSheet(sheet)
+    }
+    
+    @objc private func openHistorySheet(_ sender: Any) {
+        guard let window = self.window, let sheet = historySheetController.window else { return }
+        historySheetController.refreshList()
         window.beginSheet(sheet)
     }
 }

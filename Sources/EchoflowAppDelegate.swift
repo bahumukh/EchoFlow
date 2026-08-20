@@ -23,6 +23,7 @@ class EchoflowAppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - UI
 
     private var settingsWindowController: EchoflowSettingsWindowController!
+    private var onboardingController: EchoflowOnboardingController!
     private var statusItem: NSStatusItem!
     private var toggleMenuItem: NSMenuItem!
 
@@ -99,14 +100,25 @@ class EchoflowAppDelegate: NSObject, NSApplicationDelegate {
 
         // FR-INIT-005: Build UI
         settingsWindowController = EchoflowSettingsWindowController(delegate: self)
+        onboardingController = EchoflowOnboardingController(delegate: self)
         buildMenuBar()
 
         // FR-INIT-006: Check/prompt Accessibility
-        checkAccessibility(prompt: true)
+        checkAccessibility(prompt: false)
         startPermissionWatcher()
 
-        // FR-INIT-007: Show settings window
-        showSettingsWindow()
+        // FR-INIT-007: Show settings window or onboarding
+        let micStatus = AVCaptureDevice.authorizationStatus(for: .audio)
+        let isMicGranted = (micStatus == .authorized)
+        let options = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: false] as CFDictionary
+        let isAxGranted = AXIsProcessTrustedWithOptions(options)
+        
+        if isMicGranted && isAxGranted {
+            showSettingsWindow()
+        } else {
+            onboardingController.showWindow(nil)
+            NSApp.activate(ignoringOtherApps: true)
+        }
 
         // FR-INIT-008: Surface missing runtime
         if whisperCLIPath == nil || modelPath == nil {
@@ -205,6 +217,18 @@ class EchoflowAppDelegate: NSObject, NSApplicationDelegate {
     var snippetEntries: [[String: Any]] {
         get { settings["snippets"] as? [[String: Any]] ?? [] }
     }
+    var dictationHotkey: String {
+        get { settings["dictationHotkey"] as? String ?? "fn" }
+        set { settings["dictationHotkey"] = newValue; saveSettings(); refreshGlobalHotkeys() }
+    }
+    var undoHotkey: String {
+        get { settings["undoHotkey"] as? String ?? "opt_z" }
+        set { settings["undoHotkey"] = newValue; saveSettings(); refreshGlobalHotkeys() }
+    }
+    var activeModel: String {
+        get { settings["activeModel"] as? String ?? EchoflowModelManager.ModelType.base.rawValue }
+        set { settings["activeModel"] = newValue; saveSettings(); discoverRuntime() }
+    }
 
     // MARK: - History
 
@@ -233,17 +257,24 @@ class EchoflowAppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    func clearHistory() {
+        history.removeAll()
+        saveHistory()
+    }
+
     // MARK: - Runtime Discovery (Section 9.7)
 
-    private func discoverRuntime() {
-        let modelPriority = [
+    func discoverRuntime() {
+        let preferredModel = activeModel
+        let fallbackModels = [
             "ggml-small.en.bin",
             "ggml-base.en.bin",
             "ggml-small.bin",
             "ggml-base.bin"
         ]
+        var searchModels = [preferredModel]
+        searchModels.append(contentsOf: fallbackModels.filter { $0 != preferredModel })
 
-        // Search roots in order
         var roots: [String] = []
 
         // 1. Bundle resources/Runtime
@@ -268,20 +299,51 @@ class EchoflowAppDelegate: NSObject, NSApplicationDelegate {
         }
 
         let fm = FileManager.default
+        
+        // Find CLI
+        var foundCLI: String? = nil
         for root in roots {
             let cliPath = root + "/whisper-cli"
-            guard fm.isExecutableFile(atPath: cliPath) else { continue }
-
-            // Find first available model
-            for model in modelPriority {
+            if fm.isExecutableFile(atPath: cliPath) {
+                foundCLI = cliPath
+                break
+            }
+        }
+        
+        guard let cliPath = foundCLI else {
+            whisperCLIPath = nil
+            modelPath = nil
+            return
+        }
+        
+        whisperCLIPath = cliPath
+        
+        // Find Model
+        // 1. Check App Support / Models first
+        let appSupport = fm.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+            .appendingPathComponent("Echoflow")
+        let downloadedModelsDir = appSupport.appendingPathComponent("Models")
+        
+        for model in searchModels {
+            let dlPath = downloadedModelsDir.appendingPathComponent(model).path
+            if fm.fileExists(atPath: dlPath) {
+                modelPath = dlPath
+                return
+            }
+        }
+        
+        // 2. Check bundled models
+        for root in roots {
+            for model in searchModels {
                 let mPath = root + "/models/" + model
                 if fm.fileExists(atPath: mPath) {
-                    whisperCLIPath = cliPath
                     modelPath = mPath
                     return
                 }
             }
         }
+        
+        modelPath = nil
     }
 
     // Settings UI is now handled by EchoflowSettingsWindowController
@@ -444,31 +506,41 @@ class EchoflowAppDelegate: NSObject, NSApplicationDelegate {
             self?.checkAccessibility()
         }
     }
-    // MARK: - Global Shortcut (Fn Key) (Section 8.4)
+    
+    func refreshGlobalHotkeys() {
+        if accessibilityGranted {
+            removeGlobalHotkey()
+            installGlobalHotkey()
+        }
+    }
+    // MARK: - Global Shortcut (Section 8.4)
 
     private var globalMonitor: Any?
     private var localMonitor: Any?
+    private var globalMonitorKeyDown: Any?
+    private var localMonitorKeyDown: Any?
 
     private func installGlobalHotkey() {
         guard globalMonitor == nil else { return }
 
+        let dh = self.dictationHotkey
+        
         let handler: (NSEvent) -> Void = { [weak self] event in
-            // .function modifier corresponds to the Fn / Globe key
-            let isFnDown = event.modifierFlags.contains(.function)
+            var isDown = false
+            if dh == "fn" { isDown = event.modifierFlags.contains(.function) }
+            else if dh == "opt" { isDown = event.modifierFlags.contains(.option) }
+            else if dh == "ctrl" { isDown = event.modifierFlags.contains(.control) }
+            else if dh == "cmd" { isDown = event.modifierFlags.contains(.command) }
 
-            if isFnDown {
+            if isDown {
                 if self?.shortcutDown == false {
                     self?.shortcutDown = true
-                    DispatchQueue.main.async {
-                        self?.startDictation()
-                    }
+                    DispatchQueue.main.async { self?.startDictation() }
                 }
             } else {
                 if self?.shortcutDown == true {
                     self?.shortcutDown = false
-                    DispatchQueue.main.async {
-                        self?.stopDictation()
-                    }
+                    DispatchQueue.main.async { self?.stopDictation() }
                 }
             }
         }
@@ -481,6 +553,33 @@ class EchoflowAppDelegate: NSObject, NSApplicationDelegate {
             handler(event)
             return event
         }
+        
+        let uh = self.undoHotkey
+        
+        let keyDownHandler: (NSEvent) -> Void = { [weak self] event in
+            var matched = false
+            if uh == "opt_z" && event.keyCode == 6 && event.modifierFlags.contains(.option) { matched = true }
+            else if uh == "cmd_u" && event.keyCode == 32 && event.modifierFlags.contains(.command) { matched = true }
+            else if uh == "ctrl_z" && event.keyCode == 6 && event.modifierFlags.contains(.control) { matched = true }
+            
+            if matched {
+                self?.undoLastInsertion()
+            }
+        }
+        
+        globalMonitorKeyDown = NSEvent.addGlobalMonitorForEvents(matching: .keyDown, handler: keyDownHandler)
+        localMonitorKeyDown = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            var matched = false
+            if uh == "opt_z" && event.keyCode == 6 && event.modifierFlags.contains(.option) { matched = true }
+            else if uh == "cmd_u" && event.keyCode == 32 && event.modifierFlags.contains(.command) { matched = true }
+            else if uh == "ctrl_z" && event.keyCode == 6 && event.modifierFlags.contains(.control) { matched = true }
+            
+            if matched {
+                keyDownHandler(event)
+                return nil // consume the event
+            }
+            return event
+        }
     }
 
     private func removeGlobalHotkey() {
@@ -491,6 +590,14 @@ class EchoflowAppDelegate: NSObject, NSApplicationDelegate {
         if let lm = localMonitor {
             NSEvent.removeMonitor(lm)
             localMonitor = nil
+        }
+        if let gmkd = globalMonitorKeyDown {
+            NSEvent.removeMonitor(gmkd)
+            globalMonitorKeyDown = nil
+        }
+        if let lmkd = localMonitorKeyDown {
+            NSEvent.removeMonitor(lmkd)
+            localMonitorKeyDown = nil
         }
         shortcutDown = false
     }
@@ -864,6 +971,24 @@ class EchoflowAppDelegate: NSObject, NSApplicationDelegate {
         guard let source = CGEventSource(stateID: .hidSystemState) else { return }
         guard let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 36, keyDown: true) else { return }
         guard let keyUp = CGEvent(keyboardEventSource: source, virtualKey: 36, keyDown: false) else { return }
+
+        keyDown.post(tap: .cghidEventTap)
+        keyUp.post(tap: .cghidEventTap)
+    }
+
+    private func undoLastInsertion() {
+        postCommandZ()
+        EchoflowHUDController.shared.show(state: .info("Undo", "Reverted last insertion"), hideAfter: 2.0)
+    }
+
+    private func postCommandZ() {
+        // Command-Z with key code 6 and Command flag
+        guard let source = CGEventSource(stateID: .hidSystemState) else { return }
+        guard let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 6, keyDown: true) else { return }
+        guard let keyUp = CGEvent(keyboardEventSource: source, virtualKey: 6, keyDown: false) else { return }
+
+        keyDown.flags = .maskCommand
+        keyUp.flags = .maskCommand
 
         keyDown.post(tap: .cghidEventTap)
         keyUp.post(tap: .cghidEventTap)

@@ -27,8 +27,11 @@ xcrun swiftc \
     "$PROJECT_ROOT/Sources/EchoflowAudioRecorder.swift" \
     "$PROJECT_ROOT/Sources/EchoflowWaveformView.swift" \
     "$PROJECT_ROOT/Sources/EchoflowAppDelegate.swift" \
+    "$PROJECT_ROOT/Sources/EchoflowOnboardingController.swift" \
+    "$PROJECT_ROOT/Sources/EchoflowModelManager.swift" \
     "$PROJECT_ROOT/Sources/EchoflowSettingsWindowController.swift" \
     "$PROJECT_ROOT/Sources/EchoflowDictionarySheetController.swift" \
+    "$PROJECT_ROOT/Sources/EchoflowHistorySheetController.swift" \
     "$PROJECT_ROOT/Sources/EchoflowHUDController.swift" \
     "$PROJECT_ROOT/Sources/EchoflowAppService.swift"
 
