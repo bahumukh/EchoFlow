@@ -1,15 +1,30 @@
-# Echoflow
+<p align="center">
+  <a href="https://echoflow.bahumukh.com">
+    <picture>
+      <source srcset="https://via.placeholder.com/400x100?text=EchoFlow+Logo" media="(prefers-color-scheme: dark)">
+      <source srcset="https://via.placeholder.com/400x100?text=EchoFlow+Logo" media="(prefers-color-scheme: light)">
+      <img src="https://via.placeholder.com/400x100?text=EchoFlow+Logo" alt="EchoFlow logo">
+    </picture>
+  </a>
+</p>
+<p align="center">An open-source, fully private, unlimited desktop dictation application.</p>
+<p align="center">
+  <a href="https://github.com/bahumukh/EchoFlow/actions/workflows/build-and-release.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/bahumukh/EchoFlow/build-and-release.yml?style=flat-square&branch=main" /></a>
+  <a href="https://github.com/bahumukh/EchoFlow/releases/latest"><img alt="Latest Release" src="https://img.shields.io/github/v/release/bahumukh/EchoFlow?style=flat-square" /></a>
+  <a href="https://github.com/bahumukh/EchoFlow/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/bahumukh/EchoFlow?style=flat-square" /></a>
+</p>
 
-Echoflow is an open-source, fully private, unlimited desktop dictation application built by **Bahumukh**.
+[![EchoFlow Demo](https://via.placeholder.com/1200x600?text=EchoFlow+Screenshot)](https://echoflow.bahumukh.com)
 
-This project will be launched to the public at: **[echoflow.bahumukh.com](https://echoflow.bahumukh.com)**.
+---
 
-## Overview
+### Overview
+
 Echoflow provides a global, low-friction, hold-to-dictate workflow designed for absolute privacy. It runs entirely locally on your machine, ensuring that your audio never leaves your device. 
 
 Instead of relying on Electron or bloated web frameworks, Echoflow uses a **Multi-Native Architecture**. It provides three entirely separate native applications (macOS, Windows, and Linux) that all wrap around a single shared, high-performance `whisper.cpp` C/C++ engine. This ensures the app feels 100% native on every operating system, consumes minimal RAM/battery, and integrates deeply with OS-specific Accessibility APIs for global hotkeys and seamless typing simulation.
 
-## Key Features
+### Key Features
 - **100% Local & Private**: No cloud inference, subscriptions, or API keys required. Audio processing runs locally.
 - **Global Hotkey**: Press and hold a single key anywhere on your OS to start dictating.
 - **Instant Insertion**: Your transcribed text is automatically pasted exactly where your cursor is, in any application.
@@ -18,7 +33,7 @@ Instead of relying on Electron or bloated web frameworks, Echoflow uses a **Mult
 
 ---
 
-## 💻 Usage (All Platforms)
+### 💻 Usage (All Platforms)
 
 1. Click on any text field in any application (e.g., Chrome, Slack, VSCode, Notes).
 2. **Press and hold** the Dictation Hotkey:
@@ -31,83 +46,33 @@ Instead of relying on Electron or bloated web frameworks, Echoflow uses a **Mult
 
 ---
 
-## 🍏 macOS
+### Installation
 
-The macOS client is a native Swift/AppKit application optimized for Apple Silicon.
+#### macOS (Apple Silicon)
+1. Go to the [Releases](https://github.com/bahumukh/EchoFlow/releases/latest) page.
+2. Download `Echoflow-macOS.zip` and extract `Echoflow.app` into your **Applications** folder.
+3. **Right-click (or Control-click)** the app and select **Open** to bypass Gatekeeper.
+4. Grant **Accessibility** and **Microphone** permissions when prompted.
 
-### System Requirements
-- macOS 14 (Sonoma) or newer.
-- Apple Silicon Mac (M1, M2, M3, M4). Intel Macs are currently not supported.
+#### Windows (WPF .NET 8)
+1. Go to the [Releases](https://github.com/bahumukh/EchoFlow/releases/latest) page.
+2. Download `Echoflow-Windows.zip` and extract it to your preferred location.
+3. Run `Echoflow.exe`. (If Windows SmartScreen appears, click *More info* -> *Run anyway*).
 
-### Installation (Pre-built Release)
-1. Go to the **Releases** page on this GitHub repository.
-2. Download the latest `Echoflow-macOS.zip` file.
-3. Extract and drag `Echoflow.app` into your **Applications** folder.
-4. **Right-click (or Control-click)** the app and select **Open** to bypass Gatekeeper.
-5. Grant **Accessibility** and **Microphone** permissions when prompted.
-
-### Building from Source
-1. Clone the repository and navigate to the root directory.
-2. Run the automated installation script:
-   ```bash
-   ./macOS/scripts/install-app.sh
-   ```
-   *(This will compile the Swift code, download the Whisper AI models, package the `.app` bundle, and install it into your `~/Applications` directory.)*
+#### Linux (GTK3 / X11)
+1. Go to the [Releases](https://github.com/bahumukh/EchoFlow/releases/latest) page.
+2. Download `Echoflow-Linux.zip` and extract it to your preferred location.
+3. Make sure X11 and ALSA dependencies are installed (`sudo apt install libgtk-3-dev libasound2-dev libx11-dev libxtst-dev`).
+4. Run `./echoflow`. *(Note: Wayland users may need to run this under XWayland).*
 
 ---
 
-## 🪟 Windows (C# / WPF)
-
-The Windows client is a native `.NET 8.0` WPF application utilizing `NAudio` for recording and `Win32` APIs for global keystroke interception and injection.
-
-### System Requirements
-- Windows 10 or Windows 11.
-- [.NET 8.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
-
 ### Building from Source
-1. Clone the repository and ensure you have the `.NET 8.0 SDK` installed.
-2. First, download the shared AI models and build the `whisper.cpp` runtime (Requires CMake/C++ compiler):
-   ```cmd
-   cd Vendor\whisper.cpp
-   cmake -B build
-   cmake --build build --config Release
-   ```
-   *(Make sure to copy the resulting `whisper-cli.exe` and a `.bin` model into the root `Runtime/` and `Runtime/models/` folders respectively).*
-3. Navigate to the Windows project directory:
-   ```cmd
-   cd Windows
-   dotnet restore
-   dotnet run
-   ```
 
----
-
-## 🐧 Linux (C++ / GTK)
-
-The Linux client is a native `C++17` application utilizing `GTK3` for the UI, `ALSA` for low-level audio capture, and `X11/XTest` for global keystroke interception.
-
-> **Note on Wayland**: Because Wayland explicitly prevents applications from globally grabbing keys or simulating keystrokes for security reasons, Echoflow relies on X11 APIs. Wayland users may need to run this under XWayland, or manually map compositor shortcuts to trigger it via IPC.
-
-### System Requirements
-- Ubuntu, Debian, or any modern Linux distribution running an X11 server.
-
-### Building from Source
-1. Install the required dependencies:
-   ```bash
-   sudo apt update
-   sudo apt install build-essential cmake libgtk-3-dev libasound2-dev libx11-dev libxtst-dev
-   ```
-2. Clone the repository and navigate to the Linux project directory:
-   ```bash
-   cd Linux
-   mkdir build && cd build
-   cmake ..
-   make
-   ```
-3. Run the application:
-   ```bash
-   ./echoflow
-   ```
+Check the dedicated READMEs for each platform for detailed build instructions:
+- [macOS Developer Guide](macOS/README.md) *(Uses Xcode and Swift)*
+- [Windows Developer Guide](Windows/README.md) *(Uses Visual Studio / .NET 8 SDK)*
+- [Linux Developer Guide](Linux/README.md) *(Uses CMake and GCC)*
 
 ---
 
