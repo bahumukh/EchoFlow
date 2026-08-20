@@ -35,4 +35,4 @@ To compile and run this application, you **must be on a Linux machine** (e.g., U
    ./echoflow
    ```
 
-**Note:** Ensure that the `whisper-cli` and `.bin` models exist in the `../Runtime/` folder relative to the executable before running, otherwise inference will silently fail.
+**Note:** Ensure that the `whisper-cli` and `.bin` models exist in the `../../Runtime/` folder (the root of the project) before running, otherwise inference will silently fail.

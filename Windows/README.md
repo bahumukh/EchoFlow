@@ -28,4 +28,4 @@ To compile and run this application, you **must be on a Windows machine**.
    dotnet run
    ```
 
-**Note:** Ensure that the `whisper-cli.exe` and `.bin` models exist in the `../Runtime/` folder relative to the executable before running, otherwise inference will silently fail.
+**Note:** Ensure that the `whisper-cli.exe` and `.bin` models exist in the root `Runtime/` folder (4 levels up from the output executable `bin/Debug/net8.0-windows/`) before running, otherwise inference will silently fail.
