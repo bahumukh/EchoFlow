@@ -24,7 +24,7 @@ There are absolutely no limits or caps on how many people can download or use Ec
 
 ### Method 1: Download the Release (Easiest)
 1. Go to the **Releases** page on this GitHub repository.
-2. Download the latest `Echoflow-v1.x.zip` file.
+2. Download the latest `Echoflow-v0.1.0.zip` file.
 3. Extract the ZIP file.
 4. Drag the extracted `Echoflow.app` into your Mac's **Applications** folder.
 5. Open `Echoflow` from your Launchpad or Spotlight.
