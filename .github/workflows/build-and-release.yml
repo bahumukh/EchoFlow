@@ -71,6 +71,7 @@ jobs:
         dotnet-version: '8.0.x'
 
     - name: Setup Engine (whisper.cpp & Models)
+      shell: bash
       run: |
         mkdir -p Runtime/models
         git clone --depth 1 --branch v1.9.1 https://github.com/ggml-org/whisper.cpp.git Vendor/whisper.cpp
@@ -81,11 +82,13 @@ jobs:
         curl -L -o ../../Runtime/models/ggml-small.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en.bin
 
     - name: Build WPF Application
+      shell: bash
       run: |
         cd Windows
         dotnet publish -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ../dist/Windows
 
     - name: Package Release ZIP
+      shell: bash
       run: |
         cp -r Runtime dist/Windows/
         cd dist/Windows
