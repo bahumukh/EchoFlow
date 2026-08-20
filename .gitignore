@@ -1,0 +1,25 @@
+# Xcode
+.build/
+build/
+DerivedData/
+*.pbxproj
+*.xcworkspace
+xcuserdata/
+*.xcuserstate
+
+# Swift
+.swiftpm/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+
+# App bundle
+dist/
+Echoflow.app/
+
+# Runtime / Models (Users should download these themselves)
+Runtime/models/*.bin
+Runtime/whisper-cli
