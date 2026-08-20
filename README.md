@@ -1,71 +1,115 @@
 # Echoflow
 
-Echoflow is an open-source, private, unlimited desktop dictation application for macOS, built by **Bahumukh**.
+Echoflow is an open-source, fully private, unlimited desktop dictation application built by **Bahumukh**.
 
 This project will be launched to the public at: **[echoflow.bahumukh.com](https://echoflow.bahumukh.com)**.
 
 ## Overview
-Echoflow provides a global, low-friction, hold-to-dictate workflow designed for absolute privacy. It runs entirely locally on your Apple Silicon Mac, ensuring that your audio never leaves your device. 
+Echoflow provides a global, low-friction, hold-to-dictate workflow designed for absolute privacy. It runs entirely locally on your machine, ensuring that your audio never leaves your device. 
+
+Instead of relying on Electron or bloated web frameworks, Echoflow uses a **Multi-Native Architecture**. It provides three entirely separate native applications (macOS, Windows, and Linux) that all wrap around a single shared, high-performance `whisper.cpp` C/C++ engine. This ensures the app feels 100% native on every operating system, consumes minimal RAM/battery, and integrates deeply with OS-specific Accessibility APIs for global hotkeys and seamless typing simulation.
 
 ## Key Features
-- **100% Local & Private**: No cloud inference, subscriptions, or API keys required. Audio processing runs locally using a bundled `whisper.cpp` engine.
-- **Customizable Hotkeys**: Choose your preferred global trigger key (Fn, Option, Control, or Command) to hold and speak.
-- **Instant Insertion**: Your transcribed text is automatically pasted exactly where your cursor is, in almost any macOS application.
-- **Smart Formatting & Fillers**: Automatically cleans up your transcript, capitalizing sentences, fixing punctuation, and stripping filler words (like "um" and "uh").
-- **Transcription History & Undo**: Made a mistake? Use your configured Undo Hotkey (like Option+Z) to revert the transcription, or view all your past transcriptions in the built-in History log.
-- **Offline AI Models**: Switch between `Base` and `Small` language models dynamically based on your speed and accuracy preferences.
-- **Custom Dictionary**: Teach Echoflow your specific industry terms, names, and reusable snippets via a built-in JSON dictionary.
-
-## Architecture
-Echoflow uses a **multi-native architecture** to ensure the best possible performance and system integration on every platform:
-- **macOS**: Native Swift/AppKit application
-- **Windows**: Native C#/.NET application (Coming Soon)
-- **Linux**: Native C++/GTK application (Coming Soon)
-
-Each platform uses the identical local `whisper.cpp` engine for processing audio.
+- **100% Local & Private**: No cloud inference, subscriptions, or API keys required. Audio processing runs locally.
+- **Global Hotkey**: Press and hold a single key anywhere on your OS to start dictating.
+- **Instant Insertion**: Your transcribed text is automatically pasted exactly where your cursor is, in any application.
+- **Smart Formatting**: Automatically cleans up your transcript, capitalizing sentences and fixing punctuation.
+- **Custom Dictionary**: Teach Echoflow your specific industry terms and acronyms via a built-in JSON dictionary.
 
 ---
 
-## Installation Guide (macOS Users)
+## 💻 Usage (All Platforms)
 
-There are absolutely no limits or caps on how many people can download or use Echoflow. To install the app:
+1. Click on any text field in any application (e.g., Chrome, Slack, VSCode, Notes).
+2. **Press and hold** the Dictation Hotkey:
+   - **macOS**: `Fn` (Function) key (Customizable in settings)
+   - **Windows**: `F12` key
+   - **Linux**: `F12` key
+3. A sleek, semi-transparent "Listening..." HUD will appear on your screen.
+4. Speak naturally.
+5. **Release** the key. The HUD will disappear, and within moments, your transcribed text will be automatically pasted right where your cursor is!
 
-### Method 1: Download the Release (Easiest)
-1. Go to the **Releases** page on this GitHub repository.
-2. Download the latest `Echoflow-v0.1.0.zip` file.
-3. Extract the ZIP file.
-4. Drag the extracted `Echoflow.app` into your Mac's **Applications** folder.
-5. **Important**: Because this app is not distributed via the App Store, macOS may block it. To open it the first time:
-   - **Right-click (or Control-click)** the `Echoflow.app` icon in your Applications folder.
-   - Select **Open** from the menu.
-   - Click **Open** again in the warning dialog to bypass Gatekeeper.
-6. The first time you launch the app, you will be prompted to grant **Accessibility** and **Microphone** permissions. (Accessibility is required to paste text into other apps).
+---
+
+## 🍏 macOS
+
+The macOS client is a native Swift/AppKit application optimized for Apple Silicon.
 
 ### System Requirements
-- **macOS 14 (Sonoma)** or newer.
-- An **Apple Silicon Mac** (M1, M2, M3, M4). Intel Macs are not supported.
+- macOS 14 (Sonoma) or newer.
+- Apple Silicon Mac (M1, M2, M3, M4). Intel Macs are currently not supported.
+
+### Installation (Pre-built Release)
+1. Go to the **Releases** page on this GitHub repository.
+2. Download the latest `Echoflow-macOS.zip` file.
+3. Extract and drag `Echoflow.app` into your **Applications** folder.
+4. **Right-click (or Control-click)** the app and select **Open** to bypass Gatekeeper.
+5. Grant **Accessibility** and **Microphone** permissions when prompted.
+
+### Building from Source
+1. Clone the repository and navigate to the root directory.
+2. Run the automated installation script:
+   ```bash
+   ./macOS/scripts/install-app.sh
+   ```
+   *(This will compile the Swift code, download the Whisper AI models, package the `.app` bundle, and install it into your `~/Applications` directory.)*
 
 ---
 
-## Developer Guide (Building from Source)
+## 🪟 Windows (C# / WPF)
 
-If you are a developer and wish to compile the application yourself:
+The Windows client is a native `.NET 8.0` WPF application utilizing `NAudio` for recording and `Win32` APIs for global keystroke interception and injection.
 
-### Prerequisites
-- Xcode installed on your Mac.
-- Homebrew installed (optional, for dependencies).
+### System Requirements
+- Windows 10 or Windows 11.
+- [.NET 8.0 SDK](https://dotnet.microsoft.com/en-us/download/dotnet/8.0).
 
-### Build Instructions (macOS)
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/bahumukh/EchoFlow.git
-   cd EchoFlow/macOS
+### Building from Source
+1. Clone the repository and ensure you have the `.NET 8.0 SDK` installed.
+2. First, download the shared AI models and build the `whisper.cpp` runtime (Requires CMake/C++ compiler):
+   ```cmd
+   cd Vendor\whisper.cpp
+   cmake -B build
+   cmake --build build --config Release
    ```
-2. Run the automated installation script. This will compile the Swift code, download the necessary Whisper AI models, package the `.app` bundle, and install it into your `~/Applications` directory:
-   ```bash
-   ./scripts/install-app.sh
+   *(Make sure to copy the resulting `whisper-cli.exe` and a `.bin` model into the root `Runtime/` and `Runtime/models/` folders respectively).*
+3. Navigate to the Windows project directory:
+   ```cmd
+   cd Windows
+   dotnet restore
+   dotnet run
    ```
-3. Once completed, the script will automatically launch the newly built app.
+
+---
+
+## 🐧 Linux (C++ / GTK)
+
+The Linux client is a native `C++17` application utilizing `GTK3` for the UI, `ALSA` for low-level audio capture, and `X11/XTest` for global keystroke interception.
+
+> **Note on Wayland**: Because Wayland explicitly prevents applications from globally grabbing keys or simulating keystrokes for security reasons, Echoflow relies on X11 APIs. Wayland users may need to run this under XWayland, or manually map compositor shortcuts to trigger it via IPC.
+
+### System Requirements
+- Ubuntu, Debian, or any modern Linux distribution running an X11 server.
+
+### Building from Source
+1. Install the required dependencies:
+   ```bash
+   sudo apt update
+   sudo apt install build-essential cmake libgtk-3-dev libasound2-dev libx11-dev libxtst-dev
+   ```
+2. Clone the repository and navigate to the Linux project directory:
+   ```bash
+   cd Linux
+   mkdir build && cd build
+   cmake ..
+   make
+   ```
+3. Run the application:
+   ```bash
+   ./echoflow
+   ```
+
+---
 
 ## License
 
