@@ -108,7 +108,7 @@ class EchoflowHUDController {
     }
 
     enum State {
-        case listening
+        case listening(String)
         case transcribing
         case success
         case clipboard
@@ -123,9 +123,9 @@ class EchoflowHUDController {
         hudIconView.layer?.setAffineTransform(.identity)
 
         switch state {
-        case .listening:
+        case .listening(let hotkeyText):
             hudTitleLabel.stringValue = "Listening…"
-            hudDetailLabel.stringValue = "Release ⌥ Space to transcribe and insert"
+            hudDetailLabel.stringValue = "Release \(hotkeyText) to transcribe and insert"
             hudIconView.image = NSImage(systemSymbolName: "waveform", accessibilityDescription: nil)
             hudIconView.contentTintColor = NSColor(calibratedRed: 0.28, green: 0.62, blue: 0.96, alpha: 1.0)
             waveformView.isHidden = false

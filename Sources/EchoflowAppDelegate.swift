@@ -644,6 +644,15 @@ class EchoflowAppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    private func getHotkeyDisplayString() -> String {
+        switch dictationHotkey {
+        case "opt": return "Option"
+        case "ctrl": return "Control"
+        case "cmd": return "Command"
+        default: return "Fn"
+        }
+    }
+
     private func beginRecording() {
         guard state == .idle else { return }
 
@@ -657,7 +666,7 @@ class EchoflowAppDelegate: NSObject, NSApplicationDelegate {
             state = .recording
             updateMenuState()
 
-            EchoflowHUDController.shared.show(state: .listening)
+            EchoflowHUDController.shared.show(state: .listening(getHotkeyDisplayString()))
         } catch {
             EchoflowHUDController.shared.show(state: .error(error.localizedDescription), hideAfter: 5.0)
             state = .idle

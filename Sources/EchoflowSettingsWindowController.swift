@@ -57,135 +57,101 @@ class EchoflowSettingsWindowController: NSWindowController {
     }
     
     private func buildUI(in view: NSView) {
-        let padding: CGFloat = 40
-        var y: CGFloat = 550
+        let mainStack = NSStackView()
+        mainStack.orientation = .vertical
+        mainStack.alignment = .leading
+        mainStack.spacing = 30
+        mainStack.edgeInsets = NSEdgeInsets(top: 40, left: 40, bottom: 40, right: 40)
+        mainStack.translatesAutoresizingMaskIntoConstraints = false
+        view.addSubview(mainStack)
+        
+        NSLayoutConstraint.activate([
+            mainStack.topAnchor.constraint(equalTo: view.topAnchor),
+            mainStack.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            mainStack.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            mainStack.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
         
         // --- HEADER ---
+        let headerRow = NSStackView()
+        headerRow.orientation = .horizontal
+        headerRow.alignment = .centerY
+        headerRow.spacing = 16
+        
         let headerLabel = NSTextField(labelWithString: "Echoflow")
         headerLabel.font = NSFont.systemFont(ofSize: 28, weight: .bold)
-        headerLabel.frame = NSRect(x: padding, y: y, width: 300, height: 34)
-        view.addSubview(headerLabel)
+        headerRow.addArrangedSubview(headerLabel)
         
-        statusDot = NSTextField(labelWithString: "●")
-        statusDot.font = NSFont.systemFont(ofSize: 18)
-        statusDot.textColor = .systemGreen
-        statusDot.frame = NSRect(x: 760 - padding - 130, y: y + 4, width: 20, height: 24)
-        view.addSubview(statusDot)
+        let spacer = NSView()
+        spacer.translatesAutoresizingMaskIntoConstraints = false
+        headerRow.addArrangedSubview(spacer)
+        spacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
         
         statusIndicator = NSTextField(labelWithString: "Ready")
         statusIndicator.font = NSFont.systemFont(ofSize: 14, weight: .medium)
         statusIndicator.textColor = .secondaryLabelColor
-        statusIndicator.frame = NSRect(x: 760 - padding - 110, y: y + 6, width: 110, height: 20)
-        view.addSubview(statusIndicator)
+        headerRow.addArrangedSubview(statusIndicator)
         
-        y -= 25
+        statusDot = NSTextField(labelWithString: "●")
+        statusDot.font = NSFont.systemFont(ofSize: 18)
+        statusDot.textColor = .systemGreen
+        headerRow.addArrangedSubview(statusDot)
+        
+        mainStack.addArrangedSubview(headerRow)
+        headerRow.widthAnchor.constraint(equalTo: mainStack.widthAnchor, constant: -80).isActive = true
         
         let instruction = NSTextField(labelWithString: "Speak naturally. Your audio stays on this Mac.")
         instruction.font = NSFont.systemFont(ofSize: 14)
         instruction.textColor = .secondaryLabelColor
-        instruction.frame = NSRect(x: padding, y: y, width: 660, height: 20)
-        view.addSubview(instruction)
+        mainStack.addArrangedSubview(instruction)
+        mainStack.setCustomSpacing(15, after: headerRow)
         
-        y -= 30
-        addSeparator(in: view, at: y, padding: padding)
-        y -= 30
+        addSeparator(to: mainStack)
         
         // --- 1. DICTATION ---
-        addSectionHeader(in: view, title: "DICTATION", y: y, padding: padding)
-        y -= 35
+        addSectionHeader(to: mainStack, title: "DICTATION")
         
-        let holdLabel = NSTextField(labelWithString: "Hold shortcut")
-        holdLabel.font = NSFont.systemFont(ofSize: 14, weight: .medium)
-        holdLabel.frame = NSRect(x: padding, y: y, width: 120, height: 20)
-        view.addSubview(holdLabel)
+        let dictationGrid = NSGridView(views: [
+            [createLabel("Hold shortcut:"), createDictationPopup()],
+            [createLabel("Undo shortcut:"), createUndoPopup()]
+        ])
+        dictationGrid.rowSpacing = 16
+        dictationGrid.columnSpacing = 16
+        dictationGrid.rowAlignment = .firstBaseline
+        mainStack.addArrangedSubview(dictationGrid)
         
-        let dictationPopup = NSPopUpButton(frame: NSRect(x: 198, y: y - 2, width: 140, height: 26))
-        let dOptions = [
-            "Hold Fn": "fn",
-            "Hold Option": "opt",
-            "Hold Control": "ctrl",
-            "Hold Command": "cmd"
-        ]
-        // Sort keys logically
-        let dKeys = ["Hold Fn", "Hold Option", "Hold Control", "Hold Command"]
-        for key in dKeys { dictationPopup.addItem(withTitle: key) }
-        dictationPopup.target = self
-        dictationPopup.action = #selector(dictationHotkeyChanged(_:))
-        view.addSubview(dictationPopup)
+        let dictationChecks = NSStackView()
+        dictationChecks.orientation = .vertical
+        dictationChecks.alignment = .leading
+        dictationChecks.spacing = 10
         
-        if let currentDH = delegate?.dictationHotkey, let match = dOptions.first(where: { $1 == currentDH }) {
-            dictationPopup.selectItem(withTitle: match.key)
-        }
+        pasteCheck = createCheckbox(title: "Paste into the active app", action: #selector(toggleSetting(_:)))
+        dictationChecks.addArrangedSubview(pasteCheck)
         
-        y -= 35
+        audioCheck = createCheckbox(title: "Keep source audio", action: #selector(toggleSetting(_:)))
+        dictationChecks.addArrangedSubview(audioCheck)
+        mainStack.addArrangedSubview(dictationChecks)
         
-        let undoLabel = NSTextField(labelWithString: "Undo shortcut")
-        undoLabel.font = NSFont.systemFont(ofSize: 14, weight: .medium)
-        undoLabel.frame = NSRect(x: padding, y: y, width: 120, height: 20)
-        view.addSubview(undoLabel)
-        
-        let undoPopup = NSPopUpButton(frame: NSRect(x: 198, y: y - 2, width: 140, height: 26))
-        let uOptions = [
-            "Option + Z": "opt_z",
-            "Command + U": "cmd_u",
-            "Control + Z": "ctrl_z"
-        ]
-        let uKeys = ["Option + Z", "Command + U", "Control + Z"]
-        for key in uKeys { undoPopup.addItem(withTitle: key) }
-        undoPopup.target = self
-        undoPopup.action = #selector(undoHotkeyChanged(_:))
-        view.addSubview(undoPopup)
-        
-        if let currentUH = delegate?.undoHotkey, let match = uOptions.first(where: { $1 == currentUH }) {
-            undoPopup.selectItem(withTitle: match.key)
-        }
-        
-        y -= 40
-        
-        pasteCheck = createCheckbox(title: "Paste into the active app", x: 200, y: y, width: 300, action: #selector(toggleSetting(_:)))
-        view.addSubview(pasteCheck)
-        y -= 30
-        
-        audioCheck = createCheckbox(title: "Keep source audio", x: 200, y: y, width: 300, action: #selector(toggleSetting(_:)))
-        view.addSubview(audioCheck)
-        
-        y -= 40
+        addSeparator(to: mainStack)
         
         // --- 2. LANGUAGE & MODEL ---
-        addSectionHeader(in: view, title: "LANGUAGE & MODEL", y: y, padding: padding)
-        y -= 35
+        addSectionHeader(to: mainStack, title: "LANGUAGE & MODEL")
         
-        let langLabel = NSTextField(labelWithString: "Language")
-        langLabel.font = NSFont.systemFont(ofSize: 14, weight: .medium)
-        langLabel.frame = NSRect(x: padding, y: y, width: 120, height: 20)
-        view.addSubview(langLabel)
-        
-        let langPopup = NSPopUpButton(frame: NSRect(x: 198, y: y - 2, width: 180, height: 26))
+        let langPopup = NSPopUpButton()
         let languages = ["English": "en", "Auto-detect": "auto", "Hindi": "hi", "Spanish": "es", "French": "fr", "German": "de"]
         for label in languages.keys.sorted() { langPopup.addItem(withTitle: label) }
         langPopup.target = self
         langPopup.action = #selector(languageChanged(_:))
-        view.addSubview(langPopup)
-        
         if let currentLang = delegate?.language, let match = languages.first(where: { $1 == currentLang }) {
             langPopup.selectItem(withTitle: match.key)
         }
         
-        y -= 35
-        
-        let modelLabel = NSTextField(labelWithString: "Local model")
-        modelLabel.font = NSFont.systemFont(ofSize: 14, weight: .medium)
-        modelLabel.frame = NSRect(x: padding, y: y, width: 120, height: 20)
-        view.addSubview(modelLabel)
-        
-        modelPopup = NSPopUpButton(frame: NSRect(x: 198, y: y - 2, width: 220, height: 26))
+        modelPopup = NSPopUpButton()
         modelPopup.addItem(withTitle: EchoflowModelManager.ModelType.base.displayName)
         modelPopup.addItem(withTitle: EchoflowModelManager.ModelType.small.displayName)
         modelPopup.target = self
         modelPopup.action = #selector(modelSelectionChanged(_:))
-        view.addSubview(modelPopup)
         
-        // Select active model in dropdown
         let currentActiveRaw = delegate?.activeModel ?? EchoflowModelManager.ModelType.base.rawValue
         if currentActiveRaw == EchoflowModelManager.ModelType.base.rawValue {
             modelPopup.selectItem(at: 0)
@@ -193,102 +159,166 @@ class EchoflowSettingsWindowController: NSWindowController {
             modelPopup.selectItem(at: 1)
         }
         
-        modelActionButton = NSButton(title: "Download", target: self, action: #selector(modelActionClicked(_:)))
-        modelActionButton.frame = NSRect(x: 430, y: y - 2, width: 100, height: 24)
-        modelActionButton.bezelStyle = .rounded
-        view.addSubview(modelActionButton)
+        let modelActionStack = NSStackView()
+        modelActionStack.orientation = .horizontal
+        modelActionStack.spacing = 10
+        modelActionStack.addArrangedSubview(modelPopup)
         
-        y -= 25
+        modelActionButton = NSButton(title: "Download", target: self, action: #selector(modelActionClicked(_:)))
+        modelActionButton.bezelStyle = .rounded
+        modelActionStack.addArrangedSubview(modelActionButton)
+        
         modelStatusLabel = NSTextField(labelWithString: "Checking status...")
         modelStatusLabel.font = NSFont.systemFont(ofSize: 12)
         modelStatusLabel.textColor = .secondaryLabelColor
-        modelStatusLabel.frame = NSRect(x: 200, y: y, width: 220, height: 16)
-        view.addSubview(modelStatusLabel)
+        modelActionStack.addArrangedSubview(modelStatusLabel)
         
-        modelProgress = NSProgressIndicator(frame: NSRect(x: 430, y: y, width: 100, height: 16))
+        modelProgress = NSProgressIndicator()
         modelProgress.style = .bar
         modelProgress.isIndeterminate = false
         modelProgress.minValue = 0.0
         modelProgress.maxValue = 1.0
         modelProgress.doubleValue = 0.0
         modelProgress.isHidden = true
-        view.addSubview(modelProgress)
+        modelProgress.widthAnchor.constraint(equalToConstant: 100).isActive = true
+        modelActionStack.addArrangedSubview(modelProgress)
+        
+        let lmGrid = NSGridView(views: [
+            [createLabel("Language:"), langPopup],
+            [createLabel("Local model:"), modelActionStack]
+        ])
+        lmGrid.rowSpacing = 16
+        lmGrid.columnSpacing = 16
+        lmGrid.rowAlignment = .firstBaseline
+        mainStack.addArrangedSubview(lmGrid)
         
         updateModelUI()
-        
         modelRefreshTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true, block: { [weak self] _ in
             if EchoflowModelManager.shared.isDownloading() { return }
             self?.updateModelUI()
         })
         
-        y -= 40
+        addSeparator(to: mainStack)
         
         // --- 3. TEXT INTELLIGENCE ---
-        addSectionHeader(in: view, title: "TEXT INTELLIGENCE", y: y, padding: padding)
-        y -= 35
+        addSectionHeader(to: mainStack, title: "TEXT INTELLIGENCE")
         
-        fillersCheck = createCheckbox(title: "Remove filler words", x: 200, y: y, width: 200, action: #selector(toggleSetting(_:)))
-        view.addSubview(fillersCheck)
+        let textChecks = NSStackView()
+        textChecks.orientation = .horizontal
+        textChecks.spacing = 60
+        fillersCheck = createCheckbox(title: "Remove filler words", action: #selector(toggleSetting(_:)))
+        textChecks.addArrangedSubview(fillersCheck)
+        smartCheck = createCheckbox(title: "Smart formatting", action: #selector(toggleSetting(_:)))
+        textChecks.addArrangedSubview(smartCheck)
+        mainStack.addArrangedSubview(textChecks)
         
-        smartCheck = createCheckbox(title: "Smart formatting", x: 420, y: y, width: 200, action: #selector(toggleSetting(_:)))
-        view.addSubview(smartCheck)
-        
-        y -= 40
+        addSeparator(to: mainStack)
         
         // --- 4. DICTIONARY & SNIPPETS ---
-        addSectionHeader(in: view, title: "DICTIONARY & SNIPPETS", y: y, padding: padding)
-        y -= 25
+        let dictRow = NSStackView()
+        dictRow.orientation = .horizontal
+        dictRow.alignment = .top
+        dictRow.spacing = 20
         
+        let dictCol = NSStackView()
+        dictCol.orientation = .vertical
+        dictCol.alignment = .leading
+        dictCol.spacing = 10
+        addSectionHeader(to: dictCol, title: "DICTIONARY & SNIPPETS")
         let dictHelp = NSTextField(labelWithString: "Teach Echoflow your words and reusable phrases.")
         dictHelp.font = NSFont.systemFont(ofSize: 13)
         dictHelp.textColor = .secondaryLabelColor
-        dictHelp.frame = NSRect(x: padding, y: y, width: 680, height: 18)
-        view.addSubview(dictHelp)
-        y -= 40
+        dictCol.addArrangedSubview(dictHelp)
         
+        let dictBtns = NSStackView()
+        dictBtns.orientation = .horizontal
+        dictBtns.spacing = 10
         let editDictButton = NSButton(title: "Edit Dictionary & Snippets…", target: self, action: #selector(openDictionarySheet(_:)))
-        editDictButton.frame = NSRect(x: padding, y: y, width: 220, height: 30)
         editDictButton.bezelStyle = .rounded
-        view.addSubview(editDictButton)
-        
+        dictBtns.addArrangedSubview(editDictButton)
         let historyButton = NSButton(title: "View Transcription History…", target: self, action: #selector(openHistorySheet(_:)))
-        historyButton.frame = NSRect(x: 260, y: y, width: 220, height: 30)
         historyButton.bezelStyle = .rounded
-        view.addSubview(historyButton)
+        dictBtns.addArrangedSubview(historyButton)
+        dictCol.addArrangedSubview(dictBtns)
         
-        y -= 40
-        addSeparator(in: view, at: y, padding: padding)
-        y -= 30
+        dictRow.addArrangedSubview(dictCol)
+        mainStack.addArrangedSubview(dictRow)
         
-        // Launch at login (Footer)
-        launchAtLoginCheck = createCheckbox(title: "Launch at Login", x: padding, y: 20, width: 200, action: #selector(toggleLaunchAtLogin(_:)))
+        addSeparator(to: mainStack)
+        
+        // --- FOOTER ---
+        let footerRow = NSStackView()
+        footerRow.orientation = .horizontal
+        footerRow.alignment = .centerY
+        
+        launchAtLoginCheck = createCheckbox(title: "Launch at Login", action: #selector(toggleLaunchAtLogin(_:)))
         launchAtLoginCheck.state = EchoflowAppService.shared.isLaunchAtLoginEnabled ? .on : .off
-        view.addSubview(launchAtLoginCheck)
+        footerRow.addArrangedSubview(launchAtLoginCheck)
+        
+        let fSpacer = NSView()
+        fSpacer.translatesAutoresizingMaskIntoConstraints = false
+        footerRow.addArrangedSubview(fSpacer)
+        fSpacer.setContentHuggingPriority(.defaultLow, for: .horizontal)
         
         let copyButton = NSButton(title: "Copy Last Transcript", target: self, action: #selector(copyLastTranscript(_:)))
-        copyButton.frame = NSRect(x: 760 - padding - 180, y: 15, width: 180, height: 30)
-        view.addSubview(copyButton)
+        copyButton.bezelStyle = .rounded
+        footerRow.addArrangedSubview(copyButton)
+        
+        mainStack.addArrangedSubview(footerRow)
+        footerRow.widthAnchor.constraint(equalTo: mainStack.widthAnchor, constant: -80).isActive = true
         
         updateCheckboxStates()
     }
     
-    private func addSectionHeader(in view: NSView, title: String, y: CGFloat, padding: CGFloat) {
+    private func createLabel(_ text: String) -> NSTextField {
+        let label = NSTextField(labelWithString: text)
+        label.font = NSFont.systemFont(ofSize: 14, weight: .medium)
+        return label
+    }
+    
+    private func createDictationPopup() -> NSPopUpButton {
+        let p = NSPopUpButton()
+        let dKeys = ["Hold Fn", "Hold Option", "Hold Control", "Hold Command"]
+        let dOptions = ["Hold Fn": "fn", "Hold Option": "opt", "Hold Control": "ctrl", "Hold Command": "cmd"]
+        for key in dKeys { p.addItem(withTitle: key) }
+        p.target = self
+        p.action = #selector(dictationHotkeyChanged(_:))
+        if let currentDH = delegate?.dictationHotkey, let match = dOptions.first(where: { $1 == currentDH }) {
+            p.selectItem(withTitle: match.key)
+        }
+        return p
+    }
+    
+    private func createUndoPopup() -> NSPopUpButton {
+        let p = NSPopUpButton()
+        let uKeys = ["Option + Z", "Command + U", "Control + Z"]
+        let uOptions = ["Option + Z": "opt_z", "Command + U": "cmd_u", "Control + Z": "ctrl_z"]
+        for key in uKeys { p.addItem(withTitle: key) }
+        p.target = self
+        p.action = #selector(undoHotkeyChanged(_:))
+        if let currentUH = delegate?.undoHotkey, let match = uOptions.first(where: { $1 == currentUH }) {
+            p.selectItem(withTitle: match.key)
+        }
+        return p
+    }
+    
+    private func addSectionHeader(to stack: NSStackView, title: String) {
         let label = NSTextField(labelWithString: title)
         label.font = NSFont.systemFont(ofSize: 12, weight: .semibold)
         label.textColor = .tertiaryLabelColor
-        label.frame = NSRect(x: padding, y: y, width: 680, height: 16)
-        view.addSubview(label)
+        stack.addArrangedSubview(label)
     }
     
-    private func addSeparator(in view: NSView, at y: CGFloat, padding: CGFloat) {
-        let sep = NSBox(frame: NSRect(x: padding, y: y, width: 760 - (padding * 2), height: 1))
+    private func addSeparator(to stack: NSStackView) {
+        let sep = NSBox()
         sep.boxType = .separator
-        view.addSubview(sep)
+        sep.translatesAutoresizingMaskIntoConstraints = false
+        stack.addArrangedSubview(sep)
+        sep.widthAnchor.constraint(equalTo: stack.widthAnchor, constant: -80).isActive = true
     }
     
-    private func createCheckbox(title: String, x: CGFloat, y: CGFloat, width: CGFloat, action: Selector) -> NSButton {
+    private func createCheckbox(title: String, action: Selector) -> NSButton {
         let btn = NSButton(checkboxWithTitle: title, target: self, action: action)
-        btn.frame = NSRect(x: x, y: y, width: width, height: 22)
         btn.font = NSFont.systemFont(ofSize: 14)
         return btn
     }

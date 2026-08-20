@@ -35,10 +35,24 @@ class EchoflowModelManager: NSObject, URLSessionDownloadDelegate {
     }
     
     func getModelPath(_ type: ModelType) -> String? {
+        // 1. Check downloaded models in App Support
         let path = modelsDir.appendingPathComponent(type.rawValue).path
         if FileManager.default.fileExists(atPath: path) {
             return path
         }
+        // 2. Check bundled models
+        if let bundlePath = Bundle.main.resourcePath {
+            let bundledPath = bundlePath + "/Runtime/models/" + type.rawValue
+            if FileManager.default.fileExists(atPath: bundledPath) {
+                return bundledPath
+            }
+        }
+        // 3. Check CWD (for debug builds)
+        let cwdPath = FileManager.default.currentDirectoryPath + "/Runtime/models/" + type.rawValue
+        if FileManager.default.fileExists(atPath: cwdPath) {
+            return cwdPath
+        }
+        
         return nil
     }
     
