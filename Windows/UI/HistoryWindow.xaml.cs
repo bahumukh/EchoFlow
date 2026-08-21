@@ -44,14 +44,14 @@ namespace Echoflow.UI
         {
             if (sender is Button btn && btn.Tag is string text)
             {
-                Clipboard.SetText(text);
-                MessageBox.Show("Copied to clipboard!", "Echoflow", MessageBoxButton.OK, MessageBoxImage.Information);
+                System.Windows.Clipboard.SetText(text);
+                System.Windows.MessageBox.Show("Copied to clipboard!", "Echoflow", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 
         private void BtnClear_Click(object sender, RoutedEventArgs e)
         {
-            if (MessageBox.Show("Are you sure you want to clear all history?", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
+            if (System.Windows.MessageBox.Show("Are you sure you want to clear all history?", "Confirm", MessageBoxButton.YesNo, MessageBoxImage.Warning) == MessageBoxResult.Yes)
             {
                 SettingsManager.ClearHistory();
                 _historyItems.Clear();
