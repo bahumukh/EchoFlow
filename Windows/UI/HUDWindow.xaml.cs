@@ -23,7 +23,7 @@ namespace Echoflow.UI
 
         private DispatcherTimer? _hideTimer;
         private Storyboard? _pulseStoryboard;
-        private readonly List<Rectangle> _waveformBars = new();
+        private readonly List<System.Windows.Shapes.Rectangle> _waveformBars = new();
         private readonly Queue<float> _levelSamples = new();
         private const int MaxSamples = 48;
 
@@ -45,7 +45,7 @@ namespace Echoflow.UI
 
             for (int i = 0; i < barCount; i++)
             {
-                var bar = new Rectangle
+                var bar = new System.Windows.Shapes.Rectangle
                 {
                     Width = barWidth,
                     Height = 2,
