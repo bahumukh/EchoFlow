@@ -6,46 +6,36 @@ namespace Echoflow.Services
 {
     public class GlobalHotkeyService : IDisposable
     {
+        public event Action? OnHotkeyDown;
+        public event Action? OnHotkeyUp;
+        public event Action? OnUndoHotkey;
+
         private const int WH_KEYBOARD_LL = 13;
         private const int WM_KEYDOWN = 0x0100;
         private const int WM_KEYUP = 0x0101;
         private const int WM_SYSKEYDOWN = 0x0104;
         private const int WM_SYSKEYUP = 0x0105;
 
-        // Current target hotkey (can be updated dynamically)
-        private int _targetHotkey = 0x7B; 
+        private static LowLevelKeyboardProc? _proc;
+        private static IntPtr _hookID = IntPtr.Zero;
 
-        private readonly LowLevelKeyboardProc _proc;
-        private IntPtr _hookID = IntPtr.Zero;
-        private bool _isKeyPressed = false;
-
-        public event Action? OnHotkeyDown;
-        public event Action? OnHotkeyUp;
+        // Current config
+        private int _dictationHotkeyCode = 0x7B; // Default F12
+        private int _undoHotkeyCode = 0; // Default none
 
         public GlobalHotkeyService()
         {
-            ReloadSettings();
             _proc = HookCallback;
             _hookID = SetHook(_proc);
+            ReloadSettings();
         }
 
         public void ReloadSettings()
         {
             var settings = SettingsManager.Load();
-            _targetHotkey = settings.HotkeyCode;
+            _dictationHotkeyCode = settings.HotkeyCode;
+            _undoHotkeyCode = settings.UndoHotkeyCode;
         }
-
-        private IntPtr SetHook(LowLevelKeyboardProc proc)
-        {
-            using (Process curProcess = Process.GetCurrentProcess())
-            using (ProcessModule curModule = curProcess.MainModule!)
-            {
-                return SetWindowsHookEx(WH_KEYBOARD_LL, proc,
-                    GetModuleHandle(curModule.ModuleName!), 0);
-            }
-        }
-
-        private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
 
         private IntPtr HookCallback(int nCode, IntPtr wParam, IntPtr lParam)
         {
@@ -53,26 +43,36 @@ namespace Echoflow.Services
             {
                 int vkCode = Marshal.ReadInt32(lParam);
 
-                if (vkCode == _targetHotkey)
+                // Handle Dictation Hotkey
+                if (vkCode == _dictationHotkeyCode)
                 {
                     if (wParam == (IntPtr)WM_KEYDOWN || wParam == (IntPtr)WM_SYSKEYDOWN)
                     {
-                        if (!_isKeyPressed)
-                        {
-                            _isKeyPressed = true;
-                            OnHotkeyDown?.Invoke();
-                        }
-                        // Return 1 to swallow the key press so other apps don't get F12
-                        return (IntPtr)1; 
+                        OnHotkeyDown?.Invoke();
+                        return (IntPtr)1; // Swallow the key
                     }
                     else if (wParam == (IntPtr)WM_KEYUP || wParam == (IntPtr)WM_SYSKEYUP)
                     {
-                        if (_isKeyPressed)
+                        OnHotkeyUp?.Invoke();
+                        return (IntPtr)1; // Swallow the key
+                    }
+                }
+
+                // Handle Undo Hotkey (Ctrl+Z simulation for now if _undoHotkeyCode == 1)
+                if (_undoHotkeyCode == 1)
+                {
+                    if (vkCode == 0x5A) // Z key
+                    {
+                        if (wParam == (IntPtr)WM_KEYDOWN || wParam == (IntPtr)WM_SYSKEYDOWN)
                         {
-                            _isKeyPressed = false;
-                            OnHotkeyUp?.Invoke();
+                            // Check if Ctrl is down
+                            short ctrlState = GetAsyncKeyState(0x11); // VK_CONTROL
+                            if ((ctrlState & 0x8000) != 0)
+                            {
+                                OnUndoHotkey?.Invoke();
+                                // Let OS handle it
+                            }
                         }
-                        return (IntPtr)1;
                     }
                 }
             }
@@ -85,18 +85,30 @@ namespace Echoflow.Services
         }
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern IntPtr SetWindowsHookEx(int idHook,
-            LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
+        private static extern IntPtr SetWindowsHookEx(int idHook, LowLevelKeyboardProc lpfn, IntPtr hMod, uint dwThreadId);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
         private static extern bool UnhookWindowsHookEx(IntPtr hhk);
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode,
-            IntPtr wParam, IntPtr lParam);
+        private static extern IntPtr CallNextHookEx(IntPtr hhk, int nCode, IntPtr wParam, IntPtr lParam);
 
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern IntPtr GetModuleHandle(string lpModuleName);
+
+        [DllImport("user32.dll")]
+        private static extern short GetAsyncKeyState(int vKey);
+
+        private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
+
+        private static IntPtr SetHook(LowLevelKeyboardProc proc)
+        {
+            using (Process curProcess = Process.GetCurrentProcess())
+            using (ProcessModule curModule = curProcess.MainModule!)
+            {
+                return SetWindowsHookEx(WH_KEYBOARD_LL, proc, GetModuleHandle(curModule.ModuleName), 0);
+            }
+        }
     }
 }
