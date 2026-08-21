@@ -190,6 +190,13 @@ namespace Echoflow
                 return; // Too short to process
             }
 
+            if (_audioRecorder.MaxLevel < 0.02f)
+            {
+                Dispatcher.Invoke(() => _hudWindow?.Show(HUDWindow.HUDState.Error, "Microphone is silent.", "Check your mic settings", 3));
+                CleanupAudio(audioPath);
+                return;
+            }
+
             Dispatcher.Invoke(() => {
                 _hudWindow?.Show(HUDWindow.HUDState.Transcribing);
             });

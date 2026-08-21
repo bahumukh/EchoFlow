@@ -22,6 +22,11 @@ namespace Echoflow.Services
         public double Duration { get; private set; }
 
         /// <summary>
+        /// Maximum audio level reached during the recording (0 to 1).
+        /// </summary>
+        public float MaxLevel { get; private set; }
+
+        /// <summary>
         /// Whether currently recording.
         /// </summary>
         public bool IsRecording { get; private set; }
@@ -29,6 +34,7 @@ namespace Echoflow.Services
         public void StartRecording()
         {
             if (IsRecording) return;
+            MaxLevel = 0;
 
             // Save to Echoflow Recordings directory
             string recordingsDir = SettingsManager.RecordingsDir;
@@ -109,6 +115,8 @@ namespace Echoflow.Services
 
             // Clamp to [0, 1]
             level = Math.Max(0, Math.Min(1, level));
+
+            if (level > MaxLevel) MaxLevel = level;
 
             LevelHandler?.Invoke(level);
         }

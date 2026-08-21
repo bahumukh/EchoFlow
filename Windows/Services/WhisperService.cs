@@ -85,7 +85,6 @@ namespace Echoflow.Services
                 "-of", outputPrefix,
                 "-nt",
                 "-np",
-                "-sns",
                 "-t", numThreads.ToString()
             };
 
