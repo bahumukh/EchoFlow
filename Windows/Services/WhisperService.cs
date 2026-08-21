@@ -8,7 +8,7 @@ namespace Echoflow.Services
     public class WhisperService
     {
         private readonly string _whisperExePath;
-        private readonly string _modelPath;
+        private readonly string _baseRuntimePath;
 
         public WhisperService()
         {
@@ -18,19 +18,27 @@ namespace Echoflow.Services
             // Check if Runtime exists directly next to executable (Production ZIP)
             if (Directory.Exists(Path.Combine(baseDir, "Runtime")))
             {
-                _whisperExePath = Path.Combine(baseDir, "Runtime", "whisper-cli.exe");
-                _modelPath = Path.Combine(baseDir, "Runtime", "models", "ggml-small.en.bin");
+                _baseRuntimePath = Path.Combine(baseDir, "Runtime");
+                _whisperExePath = Path.Combine(_baseRuntimePath, "whisper-cli.exe");
             }
             else // Local development fallback
             {
-                _whisperExePath = Path.Combine(baseDir, "..", "..", "..", "..", "Runtime", "whisper-cli.exe");
-                _modelPath = Path.Combine(baseDir, "..", "..", "..", "..", "Runtime", "models", "ggml-small.en.bin");
+                _baseRuntimePath = Path.Combine(baseDir, "..", "..", "..", "..", "Runtime");
+                _whisperExePath = Path.Combine(_baseRuntimePath, "whisper-cli.exe");
             }
+        }
+
+        private string GetModelPath()
+        {
+            var settings = SettingsManager.Load();
+            return Path.Combine(_baseRuntimePath, "models", settings.Model);
         }
 
         public async Task<string?> TranscribeAsync(string audioFilePath)
         {
-            if (!File.Exists(_whisperExePath) || !File.Exists(_modelPath) || !File.Exists(audioFilePath))
+            string modelPath = GetModelPath();
+            
+            if (!File.Exists(_whisperExePath) || !File.Exists(modelPath) || !File.Exists(audioFilePath))
             {
                 return null;
             }
@@ -38,7 +46,7 @@ namespace Echoflow.Services
             var startInfo = new ProcessStartInfo
             {
                 FileName = _whisperExePath,
-                Arguments = $"-m \"{_modelPath}\" -f \"{audioFilePath}\" -nt",
+                Arguments = $"-m \"{modelPath}\" -f \"{audioFilePath}\" -nt",
                 RedirectStandardOutput = true,
                 UseShellExecute = false,
                 CreateNoWindow = true

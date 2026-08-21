@@ -1,0 +1,39 @@
+<Window x:Class="Echoflow.UI.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Echoflow Settings" Height="250" Width="400"
+        WindowStartupLocation="CenterScreen"
+        Background="#2D2D30" Foreground="White"
+        ResizeMode="NoResize">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <Label Grid.Row="0" Grid.Column="0" Content="Hotkey:" Foreground="White" VerticalAlignment="Center"/>
+        <ComboBox x:Name="CmbHotkey" Grid.Row="0" Grid.Column="1" Margin="10,5,0,5">
+            <ComboBoxItem Content="F12" Tag="123"/>
+            <ComboBoxItem Content="F11" Tag="122"/>
+            <ComboBoxItem Content="F10" Tag="121"/>
+        </ComboBox>
+
+        <Label Grid.Row="1" Grid.Column="0" Content="Model:" Foreground="White" VerticalAlignment="Center"/>
+        <ComboBox x:Name="CmbModel" Grid.Row="1" Grid.Column="1" Margin="10,5,0,5">
+            <ComboBoxItem Content="ggml-small.en.bin" Tag="ggml-small.en.bin"/>
+            <ComboBoxItem Content="ggml-base.en.bin" Tag="ggml-base.en.bin"/>
+            <ComboBoxItem Content="ggml-tiny.en.bin" Tag="ggml-tiny.en.bin"/>
+        </ComboBox>
+
+        <StackPanel Grid.Row="3" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Content="Save" Width="75" Margin="0,0,10,0" Click="BtnSave_Click"/>
+            <Button Content="Cancel" Width="75" Click="BtnCancel_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

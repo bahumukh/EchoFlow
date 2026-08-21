@@ -12,8 +12,8 @@ namespace Echoflow.Services
         private const int WM_SYSKEYDOWN = 0x0104;
         private const int WM_SYSKEYUP = 0x0105;
 
-        // F12 as default dictation key for Windows
-        private const int VK_F12 = 0x7B; 
+        // Current target hotkey (can be updated dynamically)
+        private int _targetHotkey = 0x7B; 
 
         private readonly LowLevelKeyboardProc _proc;
         private IntPtr _hookID = IntPtr.Zero;
@@ -24,8 +24,15 @@ namespace Echoflow.Services
 
         public GlobalHotkeyService()
         {
+            ReloadSettings();
             _proc = HookCallback;
             _hookID = SetHook(_proc);
+        }
+
+        public void ReloadSettings()
+        {
+            var settings = SettingsManager.Load();
+            _targetHotkey = settings.HotkeyCode;
         }
 
         private IntPtr SetHook(LowLevelKeyboardProc proc)
@@ -46,7 +53,7 @@ namespace Echoflow.Services
             {
                 int vkCode = Marshal.ReadInt32(lParam);
 
-                if (vkCode == VK_F12)
+                if (vkCode == _targetHotkey)
                 {
                     if (wParam == (IntPtr)WM_KEYDOWN || wParam == (IntPtr)WM_SYSKEYDOWN)
                     {
