@@ -22,7 +22,7 @@ namespace Echoflow.UI
         }
 
         private DispatcherTimer? _hideTimer;
-        private Storyboard? _pulseStoryboard;
+
         private readonly List<System.Windows.Shapes.Rectangle> _waveformBars = new();
         private readonly Queue<float> _levelSamples = new();
         private const int MaxSamples = 48;
@@ -49,7 +49,7 @@ namespace Echoflow.UI
                 {
                     Width = barWidth,
                     Height = 2,
-                    Fill = new SolidColorBrush(Color.FromArgb(180, 120, 90, 255)), // Purple
+                    Fill = new SolidColorBrush(System.Windows.Media.Color.FromArgb(180, 120, 90, 255)), // Purple
                     RadiusX = 2,
                     RadiusY = 2
                 };

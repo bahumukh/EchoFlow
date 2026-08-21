@@ -93,7 +93,7 @@ namespace Echoflow
         {
             _notifyIcon = new NotifyIcon
             {
-                Icon = SystemIcons.Microphone,
+                Icon = SystemIcons.Application,
                 Visible = true,
                 Text = "Echoflow"
             };

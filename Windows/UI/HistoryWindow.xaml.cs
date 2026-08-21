@@ -17,7 +17,7 @@ namespace Echoflow.UI
             public string FormattedDuration { get; set; } = "";
         }
 
-        private ObservableCollection<HistoryViewModel> _historyItems;
+        private ObservableCollection<HistoryViewModel> _historyItems = new();
 
         public HistoryWindow()
         {
@@ -42,7 +42,7 @@ namespace Echoflow.UI
 
         private void BtnCopy_Click(object sender, RoutedEventArgs e)
         {
-            if (sender is Button btn && btn.Tag is string text)
+            if (sender is System.Windows.Controls.Button btn && btn.Tag is string text)
             {
                 System.Windows.Clipboard.SetText(text);
                 System.Windows.MessageBox.Show("Copied to clipboard!", "Echoflow", MessageBoxButton.OK, MessageBoxImage.Information);
