@@ -5,7 +5,7 @@ using Echoflow.UI;
 
 namespace Echoflow
 {
-    public partial class App : Application
+    public partial class App : System.Windows.Application
     {
         private GlobalHotkeyService? _hotkeyService;
         private AudioRecorderService? _audioService;

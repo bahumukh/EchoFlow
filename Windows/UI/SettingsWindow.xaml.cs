@@ -48,7 +48,7 @@ namespace Echoflow.UI
                 SettingsManager.Save(settings);
                 
                 // Notify the application to reload settings
-                if (Application.Current is App app)
+                if (System.Windows.Application.Current is App app)
                 {
                     app.ReloadSettings();
                 }
