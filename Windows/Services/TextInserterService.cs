@@ -10,7 +10,7 @@ namespace Echoflow.Services
         public void InsertText(string text)
         {
             // Set clipboard text
-            Clipboard.SetText(text);
+            System.Windows.Clipboard.SetText(text);
 
             // Give the OS a tiny moment to process the clipboard
             Thread.Sleep(50);
