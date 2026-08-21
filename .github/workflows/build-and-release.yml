@@ -76,7 +76,7 @@ jobs:
         mkdir -p Runtime/models
         git clone --depth 1 --branch v1.9.1 https://github.com/ggml-org/whisper.cpp.git Vendor/whisper.cpp
         cd Vendor/whisper.cpp
-        cmake -B build
+        cmake -B build -DBUILD_SHARED_LIBS=OFF
         cmake --build build --config Release
         cp build/bin/Release/whisper-cli.exe ../../Runtime/
         curl -L -o ../../Runtime/models/ggml-small.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en.bin
@@ -129,7 +129,7 @@ jobs:
         mkdir -p Runtime/models
         git clone --depth 1 --branch v1.9.1 https://github.com/ggml-org/whisper.cpp.git Vendor/whisper.cpp
         cd Vendor/whisper.cpp
-        cmake -B build
+        cmake -B build -DBUILD_SHARED_LIBS=OFF
         cmake --build build --config Release
         cp build/bin/whisper-cli ../../Runtime/
         curl -L -o ../../Runtime/models/ggml-small.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.en.bin
