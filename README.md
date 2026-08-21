@@ -48,7 +48,22 @@ Instead of relying on Electron or bloated web frameworks, Echoflow uses a **Mult
 
 ### Installation
 
-#### macOS (Apple Silicon)
+#### Command Line Installation (Recommended)
+You can quickly install Echoflow directly from your terminal using our automated setup scripts:
+
+**macOS:**
+```bash
+curl -fsSL https://raw.githubusercontent.com/bahumukh/EchoFlow/main/scripts/install.sh | bash
+```
+
+**Windows (PowerShell):**
+```powershell
+irm https://raw.githubusercontent.com/bahumukh/EchoFlow/main/scripts/install.ps1 | iex
+```
+
+#### Manual Installation
+
+**macOS (Apple Silicon)**
 1. Go to the [Releases](https://github.com/bahumukh/EchoFlow/releases/latest) page.
 2. Download `Echoflow-macOS.zip` and extract `Echoflow.app` into your **Applications** folder.
 3. **Right-click (or Control-click)** the app and select **Open** to bypass Gatekeeper.
