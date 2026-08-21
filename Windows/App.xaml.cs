@@ -47,6 +47,7 @@ namespace Echoflow
             });
 
             // Initial startup state
+            OpenSettings();
             CheckModelStatusAsync();
         }
 
@@ -233,20 +234,26 @@ namespace Echoflow
             // Auto Paste vs Clipboard
             if (settings.AutoPaste)
             {
-                bool success = _textInserter!.InsertText(result.Text);
+                bool success = false;
+                Dispatcher.Invoke(() => {
+                    success = _textInserter!.InsertText(result.Text);
+                });
+
                 if (result.PressEnter && success)
                 {
                     // Small delay before pressing enter
                     await Task.Delay(100);
-                    _textInserter.PressEnter();
+                    _textInserter!.PressEnter();
                 }
 
                 Dispatcher.Invoke(() => _hudWindow?.Show(HUDWindow.HUDState.Success, "", "", 1.5));
             }
             else
             {
-                System.Windows.Clipboard.SetText(result.Text);
-                Dispatcher.Invoke(() => _hudWindow?.Show(HUDWindow.HUDState.Clipboard, "", "", 2.0));
+                Dispatcher.Invoke(() => {
+                    System.Windows.Clipboard.SetText(result.Text);
+                    _hudWindow?.Show(HUDWindow.HUDState.Clipboard, "", "", 2.0);
+                });
             }
 
             // Save to history

@@ -25,8 +25,8 @@ namespace Echoflow.Services
         public int UndoHotkeyCode { get; set; } = 0; // Disabled by default
 
         // Model
-        public string Model { get; set; } = "ggml-small.en.bin";
-        public string ActiveModel { get; set; } = "ggml-small.en.bin";
+        public string Model { get; set; } = "ggml-base.en.bin";
+        public string ActiveModel { get; set; } = "ggml-base.en.bin";
 
         // Language
         public string Language { get; set; } = "en";

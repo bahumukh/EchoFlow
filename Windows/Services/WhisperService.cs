@@ -75,6 +75,7 @@ namespace Echoflow.Services
             try { File.Delete(expectedOutputFile); } catch { }
 
             // Build arguments (matching macOS)
+            int numThreads = Math.Max(2, Math.Min(8, Environment.ProcessorCount / 2));
             var args = new List<string>
             {
                 "-ng",
@@ -84,7 +85,8 @@ namespace Echoflow.Services
                 "-of", outputPrefix,
                 "-nt",
                 "-np",
-                "-sns"
+                "-sns",
+                "-t", numThreads.ToString()
             };
 
             // Language
