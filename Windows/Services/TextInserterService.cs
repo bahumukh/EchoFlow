@@ -7,16 +7,37 @@ namespace Echoflow.Services
 {
     public class TextInserterService
     {
-        public void InsertText(string text)
+        public bool InsertText(string text)
         {
-            // Set clipboard text
-            System.Windows.Clipboard.SetText(text);
+            try
+            {
+                // Set clipboard text
+                System.Windows.Clipboard.SetText(text);
 
-            // Give the OS a tiny moment to process the clipboard
-            Thread.Sleep(50);
+                // Give the OS a tiny moment to process the clipboard
+                Thread.Sleep(50);
 
-            // Simulate Ctrl+V using SendInput
-            SimulateCtrlV();
+                // Simulate Ctrl+V using SendInput
+                SimulateCtrlV();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public void PressEnter()
+        {
+            var inputs = new INPUT[2];
+            inputs[0].type = INPUT_KEYBOARD;
+            inputs[0].u.ki.wVk = VK_RETURN;
+
+            inputs[1].type = INPUT_KEYBOARD;
+            inputs[1].u.ki.wVk = VK_RETURN;
+            inputs[1].u.ki.dwFlags = KEYEVENTF_KEYUP;
+
+            SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
         }
 
         private void SimulateCtrlV()
@@ -48,6 +69,7 @@ namespace Echoflow.Services
         private const int INPUT_KEYBOARD = 1;
         private const ushort VK_CONTROL = 0x11;
         private const ushort VK_V = 0x56;
+        private const ushort VK_RETURN = 0x0D;
         private const uint KEYEVENTF_KEYUP = 0x0002;
 
         [StructLayout(LayoutKind.Sequential)]
